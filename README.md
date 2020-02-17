@@ -1,7 +1,7 @@
 # Ferret Frenzy
 #### Developed by [Madison Wright](https://www.linkedin.com/in/madisonannewright/)
 
-This is a simple browser game started during Global Game Jam 2020. Because I organized and ran [UNC Chapel Hill Global Game Jam 2020](http://uncglobalgamejam.web.unc.edu/), I was busy for most of the event and did not have the full 48 hours to make a game like other jammers did. However, I decided to start a game that I would finish later as a side project.
+This is a simple browser game that I began working on during Global Game Jam 2020. Because I organized and ran [UNC Chapel Hill Global Game Jam 2020](http://uncglobalgamejam.web.unc.edu/), I was busy for most of the event and did not have the full 48 hours to make a game like other jammers did. However, I decided to start a game that I would finish later as a side project.
 
 ## Game Design
 
@@ -16,11 +16,11 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
 
 ## Resources
 * The World Wide Web Consortium (W3C)
-	* [The W3C Markup Validation Service](https://validator.w3.org/)
-	* [The W3C CSS Validation Service](https://jigsaw.w3.org/css-validator/)
+    * [The W3C Markup Validation Service](https://validator.w3.org/)
+    * [The W3C CSS Validation Service](https://jigsaw.w3.org/css-validator/)
 
 ## Timeline
-* **February 1, 2020** - started the game around 10:00 PM and worked on it sporadically until about 4:00 AM
+* **February 1, 2020** - started to make the game around 10:00 PM and worked on it sporadically until about 4:00 AM
 * **February 2, 2020** - coded for a few more hours before running demos at the end of Global Game Jam at 5:00 PM
 * **February 5, 2020** - coded for a couple hours late at night until just after midnight
 * **February 16, 2020** - picked development back up in the evening
