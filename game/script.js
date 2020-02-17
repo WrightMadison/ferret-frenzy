@@ -174,8 +174,6 @@ var gameBoard = {
     madison.move(8, 21); // place player on board
 
     // TODO ferretMovement(); - while loop until timer is 0 (or something like that)
-    // 2/1 at like 10 PM through 2/2 at like 4 am, during the day of 2/2
-    // 2/5 late at night to 2/6 just after midnight
 }
 }
 
