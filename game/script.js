@@ -1,5 +1,7 @@
 // https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript
 
+// TODO add px to rem converter helper method
+
 // ----- SETUP -----
 document.addEventListener('keydown', keyDownHandler, false);
 document.addEventListener('keyup', keyUpHandler, false);
@@ -23,10 +25,42 @@ var fWidth = 1; // tiles
 var fHeight = 3; // tiles
 
 // Objects
-var madison;
-var ghost;
-var greyWind;
-var boundaries = [];
+var madison = new Character('tester', true, '#FF00FF', 0, 0, 1, 1); // 1x1 test character
+// var madison = new Character('Madison', true, '#5BFF33', 0, 0, pWidth, pHeight);
+var ghost = new Character('Ghost', false, '#FFFFFF', 3, 0, fWidth, fHeight);
+var greyWind = new Character('GreyWind', false, '#7A4218', 4, 0, fWidth, fHeight);
+// many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
+var boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
+                  new Boundary('east border', 31, 32, 1, 25), // 1
+                  new Boundary('south border', 0, 32, 25, 26), // 2
+                  new Boundary('west border', 0, 1, 1, 25), // 3
+                  new Boundary('north wall', 1, 31, 1, 2), // 4
+                  new Boundary('northeast wall', 30, 31, 2, 14), // 5
+                  new Boundary('front door', 30, 31, 14, 19), // 6
+                  new Boundary('southeast wall', 30, 31, 19, 25), // 7
+                  new Boundary('laundry closet', 20, 30, 24, 25), // 8
+                  new Boundary('south wall', 12, 20, 24, 25), // 9
+                  new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
+                  new Boundary('southwest wall', 1, 7, 24, 25), // 11
+                  new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
+                  new Boundary('living room pet gate', 3, 4, 11, 17), // 13
+                  new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
+                  new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
+                  new Boundary('oven', 13, 17, 2, 6), // 16
+                  new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
+                  new Boundary('refrigerator', 21, 25, 2, 6), // 18
+                  new Boundary('utility closet', 25, 30, 2, 11), // 19
+                  new Boundary('blue litter box', 28, 30, 11, 13), // 20
+                  new Boundary('rice dig box', 27, 30, 19, 24), // 21
+                  new Boundary('cat condo', 20, 22, 22, 24), // 22
+                  new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
+                  new Boundary('ferret cage', 12, 18, 20, 24), // 24
+                  new Boundary('cat post', 14, 16, 19, 20), // 25
+                  new Boundary('grey litter box', 4, 6, 21, 24), // 26
+                  new Boundary('trash cans', 4, 6, 16, 21), // 27
+                  new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
+                  new Boundary('kitchen table', 12, 18, 10, 16), // 29
+                  new Boundary('plastic ball pit', 22, 24, 15, 17)] // 30;
 
 // States
 var colliding = false;
@@ -67,7 +101,9 @@ class Character {
 
                 if (this.human == true) {
                     console.log('You stubbed your toe on the ' + boundary.name);
+                    // TODO toe stub is based on top only (may want to correct later for accuracy)
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
+                    // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
                     // TODO - you stepped in ferret poo (slowed?)
                 } else if (this.human == false) {
                     console.log(this.name + ' bonked his nose on the ' + boundary.name);
@@ -147,7 +183,8 @@ var gameBoard = {
         can = this.canvas;
         cxt = this.context;
 
-        // TODO - include pics of Grey destroying the dishwasher
+        // TODO - include pics of Grey after tearing up the dishwasher insulation and Ghost ripping up a piddle pad
+        // "this game is dedicated to my well-behaved ferrets Ghost & Grey Wind"
 
         // CANVAS DIMENSIONS
         can.width = tSize * bWidth;
@@ -157,34 +194,10 @@ var gameBoard = {
         cxt = can.getContext('2d');
         document.body.insertBefore(can, document.body.childNodes[0]);
 
-        // create characters
-        madison = new Character('Madison', true, '#5BFF33', 0, 0, pWidth, pHeight);
-        ghost = new Character('Ghost', false, '#FFFFFF', 3, 0, fWidth, fHeight);
-        greyWind = new Character('GreyWind', false, '#7A4218', 4, 0, fWidth, fHeight);
-
-        // TODO break up boundaries into their correct components and rename (maybe not?)
-        // TODO load more efficiently
-        // create boundaries
-        boundaries.push(new Boundary('kitchen counter', 0, 20, 0, 6)); // 0 - kitchen counter
-        boundaries.push(new Boundary('top right wall', 20, 32, 0, 2)); // 1 - top right wall
-        boundaries.push(new Boundary('refrigerator', 21, 25, 2, 6)); // 2 - refrigerator
-        boundaries.push(new Boundary('utility closet', 25, 30, 2, 11)); // 3 - utility closet
-        boundaries.push(new Boundary('blue litterbox', 28, 30, 11, 13)); // 4 - blue litterbox
-        boundaries.push(new Boundary('right wall', 30, 32, 2, 26)); // 5 - right wall
-        boundaries.push(new Boundary('rice box', 27, 30, 19, 26)); // 6 - rice box
-        boundaries.push(new Boundary('bottom wall', 0, 27, 24, 26)); // 7 - bottom wall
-        boundaries.push(new Boundary('pellet litter bin', 18, 20, 21, 23)); // 8 - pellet litter bin
-        boundaries.push(new Boundary('cage', 12, 18, 20, 24)); // 9 - cage
-        boundaries.push(new Boundary('cat scratcher post', 14, 16, 19, 20)); // 10 - cat scratcher post
-        boundaries.push(new Boundary('hamsters', 0, 4, 6, 24)); // 11 - hamsters
-        boundaries.push(new Boundary('trash cans', 4, 6, 16, 23)); // 12 - trash cans
-        boundaries.push(new Boundary('ping pong ball pit', 4, 6, 9, 12)); // 13 - ping pong ball pit
-        boundaries.push(new Boundary('table', 12, 18, 10, 16)); // 14 - table
-        boundaries.push(new Boundary('ball pit', 22, 24, 15, 17)); // 15 - ball pit
-
         madison.move(8, 21); // place player on board
 
         // TODO ferretMovement(); - while loop until timer is 0 (or something like that)
+        // TODO game timer
     }
 }
 

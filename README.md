@@ -12,7 +12,8 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
 
 ### Links
 * [Grid Layout](https://docs.google.com/spreadsheets/d/1-KMvaYiea7e0mTuXd-PzqM9TWUQDRjVkWKq_npYp7I8/edit?usp=sharing)
-* [Mechanics](https://docs.google.com/document/d/1mErbnoL2b4eF1-HiH77UTwKmy4L2Qa94NzU6imBUPTU/edit?usp=sharing)
+* [Game Ideas](https://docs.google.com/document/d/1mErbnoL2b4eF1-HiH77UTwKmy4L2Qa94NzU6imBUPTU/edit?usp=sharing)
+* Game Design Document - *to be created soon*
 
 ## Resources
 * The World Wide Web Consortium (W3C)
@@ -24,3 +25,4 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
 * **February 2, 2020** - coded for a few more hours before running demos at the end of Global Game Jam at 5:00 PM
 * **February 5, 2020** - coded for a couple hours late at night until just after midnight
 * **February 16, 2020** - picked development back up in the evening
+* **February 17, 2020** - continued development throughout the day
