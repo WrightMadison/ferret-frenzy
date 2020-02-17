@@ -1,0 +1,5 @@
+canvas {
+    /*TODO border: 1px solid #d3d3d3;*/
+    background-image: url("../media/board-grid.png");
+    background-size: 640px 520px; /* bWidth * tSize, bHeight * tSize */
+}
