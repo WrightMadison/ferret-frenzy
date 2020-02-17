@@ -3,3 +3,15 @@ canvas {
     background-image: url("../media/board-grid.png");
     background-size: 640px 520px; /* bWidth * tSize, bHeight * tSize */
 }
+
+#game-options {
+	width: 640px;
+}
+
+/* TODO make this prettier */
+button {
+	border: 1px solid #000000;
+	/* center the button */
+	margin: 0 auto;
+	display: block;
+}
