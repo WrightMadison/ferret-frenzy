@@ -10,7 +10,7 @@ canvas {
 
 /* TODO make this prettier */
 button {
-	border: 1px solid #000000;
+	border: 1px solid #000000; /* TODO make corners rounded */
 	/* center the button */
 	margin: 0 auto;
 	display: block;

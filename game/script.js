@@ -5,41 +5,60 @@
 
 // ----- OBJECTS -----
 class Character {
-   constructor(name, human, color, width, height) {
+   constructor(name, type, color, width, height, speed) {
         this.name = name;
-        this.human = human;
+        this.type = type;
         this.color = color;
         this.width = width; // tiles
         this.height = height; // tiles
-        this.x = 0; // tiles
-        this.y = 0; // tiles
+        this.speed = speed; // timeout or interval in milliseconds
+        this.left = 0; // tiles
+        this.right = 0;
+        this.top = 0; // tiles
+        this.bottom = 0;
         this.colliding = false;
+        this.queue = []; // list of queued moves
     }
+    // TODO - player does not need list of queued moves, only ferrets (or maybe it will come in handy)
 
     move(deltaX, deltaY) {
-        var newLeftX = this.x + deltaX;
-        var newRightX = newLeftX + this.width;
-        var newTopY = this.y + deltaY;
-        var newBottomY = newTopY + this.height;
+        var newLeft = this.left + deltaX;
+        var newRight = newLeft + this.width;
+        var newTop = this.top + deltaY;
+        var newBottom = newTop + this.height;
 
         // collision detection
         for (let i = 0; i < boundaries.length; i++) {
             let boundary = boundaries[i];
 
-            if ((((newLeftX >= boundary.left && newLeftX < boundary.right) || (newRightX > boundary.left && newRightX <= boundary.right)) &&
-                ((newTopY >= boundary.top && newTopY < boundary.bottom) || (newBottomY > boundary.top && newBottomY <= boundary.bottom))) ||
-                (((boundary.left >= newLeftX && boundary.left < newRightX) || (boundary.right > newLeftX && boundary.right <= newRightX)) &&
-                ((boundary.top >= newTopY && boundary.top < newBottomY) || (boundary.bottom > newTopY && boundary.bottom <= newBottomY)))) {
+            if (this.name != boundary.name && ((((newLeft >= boundary.left && newLeft < boundary.right) || (newRight > boundary.left && newRight <= boundary.right)) &&
+                ((newTop >= boundary.top && newTop < boundary.bottom) || (newBottom > boundary.top && newBottom <= boundary.bottom))) ||
+                (((boundary.left >= newLeft && boundary.left < newRight) || (boundary.right > newLeft && boundary.right <= newRight)) &&
+                ((boundary.top >= newTop && boundary.top < newBottom) || (boundary.bottom > newTop && boundary.bottom <= newBottom))))) {
                 this.colliding = true;
 
-                if (this.human == true) {
-                    console.log('You stubbed your toe on the ' + boundary.name);
+                if (this.type == 'human') {
+                    if (boundary.type == 'furniture') {
+                        console.log('You stubbed your toe on the ' + boundary.name);
+                    } else if (boundary.type == 'ferret') {
+                        console.log('You ran into ' + boundary.name);
+                    }
                     // TODO toe stub is based on top only (may want to correct later for accuracy)
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
                     // TODO - you stepped in ferret poo (slowed?)
-                } else if (this.human == false) {
-                    console.log(this.name + ' bonked his nose on the ' + boundary.name);
+                } else if (this.type == 'ferret') {
+                    if (boundary.type == 'furniture') {
+                        console.log(this.name + ' bonked his nose on the ' + boundary.name);
+                        // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes)
+
+                    } else if (boundary.type == 'ferret') {
+                        console.log(this.name + ' ran into ' + boundary.name);
+                        // TODO - the ferrets temporarily speed up
+                    } else if (boundary.type == 'human') {
+                        // TODO - this slows the player
+                        console.log(this.name + ' ran into ' + boundary.name + ', slowing you down.');
+                    }
                 }
                 break;
             }
@@ -48,11 +67,13 @@ class Character {
         if (this.colliding == false) {
             // clear previous location - bug with clearing at negative values (should not encounter anyway)
             // (top left x, top left y, bottom right x, bottom right y)
-            cxt.clearRect(px(this.x), px(this.y), px(this.x+this.width), px(this.y+this.height));
+            cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
 
             // update location
-            this.x = newLeftX;
-            this.y = newTopY;
+            this.left = newLeft;
+            this.right = newLeft + this.width;
+            this.top = newTop;
+            this.bottom = newTop + this.height;
             
             // redraw all objects
             for (let i = 0; i < characters.length; i++) {
@@ -67,10 +88,18 @@ class Character {
 class Boundary {
     constructor(name, left, right, top, bottom) {
         this.name = name;
+        this.type = 'furniture';
         this.left = left;
         this.right = right;
         this.top = top;
         this.bottom = bottom;
+    }
+}
+
+class Move {
+    constructor(axis, delta) {
+        this.axis = axis;
+        this.delta = delta;
     }
 }
 
@@ -79,6 +108,10 @@ document.addEventListener('keydown', keyDownHandler, false);
 document.addEventListener('keyup', keyUpHandler, false);
 
 // ----- VARIABLES -----
+// Game States
+var ghostMovement;
+var greyWindMovement;
+
 // Tile Dimensions
 var tSize = 20; // pixels
 
@@ -96,13 +129,19 @@ var pHeight = 3; // tiles
 var fWidth = 1; // tiles
 var fHeight = 3; // tiles
 
+// Character Settings
+var fMaxMove = 3; // tiles (inclusive)
+var fBaseSpeed = 500;
+var pBaseSlows = 0;
+
 // Objects
-var madison = new Character('tester', true, '#FF00FF', 1, 1); // 1x1 test character
-// var madison = new Character('Madison', true, '#5BFF33', pWidth, pHeight);
-var ghost = new Character('Ghost', false, '#FFFFFF', fWidth, fHeight);
-var greyWind = new Character('Grey Wind', false, '#7A4218', fWidth, fHeight);
-// many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
+var madison = new Character('Madison', 'human', '#5BFF33', pWidth, pHeight, 0);
+//var madison = new Character('tester', 'human', '#FF00FF', 1, 1, 0); // 1x1 test character
+var ghost = new Character('Ghost', 'ferret', '#FFFFFF', fWidth, fHeight, fBaseSpeed);
+var greyWind = new Character('Grey Wind', 'ferret', '#7A4218', fWidth, fHeight, fBaseSpeed);
 var characters = [madison, ghost, greyWind];
+var ferrets = [ghost, greyWind];
+// many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
 var boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
                   new Boundary('east border', 31, 32, 1, 25), // 1
                   new Boundary('south border', 0, 32, 25, 26), // 2
@@ -133,16 +172,14 @@ var boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
                   new Boundary('trash cans', 4, 6, 16, 21), // 27
                   new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
                   new Boundary('kitchen table', 12, 18, 10, 16), // 29
-                  new Boundary('plastic ball pit', 22, 24, 15, 17)] // 30;
+                  new Boundary('plastic ball pit', 22, 24, 15, 17), // 30
+                  madison, ghost, greyWind] // must check against other characters as well
 
 // Inputs
 var upPressed = false; // W
 var leftPressed = false; // A
 var downPressed = false; // S
 var rightPressed = false; // D
-
-// Other
-var maxFerretMove = 4; // tiles (not inclusive of max)
 
 // ----- HELPER METHODS -----
 function keyDownHandler(e) {
@@ -176,50 +213,53 @@ function px(tile) { // convert tiles to pixels
 function redraw(character) {
     // all game objects must redrawn after each move
     cxt.beginPath();
-    cxt.rect(px(character.x), px(character.y), px(character.width), px(character.height)); // rect(x, y, width, height)
+    cxt.rect(px(character.left), px(character.top), px(character.width), px(character.height)); // rect(x, y, width, height)
     cxt.fillStyle = character.color;
     cxt.fill();
     cxt.closePath();
 }
 
 function getRandomInt(max) {
-    // TODO more efficient code for this?
-    // returns a random number between 0 and max (not inclusive of max)
-    var sign = Math.floor(Math.random() * Math.floor(2));
-    if (sign == 0) { // negative
-        sign = -1;
-    }
-    // TODO negative movements not working for ferrets
-
-    return Math.floor(Math.random() * Math.floor(max)) * sign;
+    // returns a random number between 1 and max (inclusive)
+    return Math.floor(Math.random() * max) + 1;
 }
 
-function ferretMovement() {
-    for (let i = 0; i < characters.length; i++) {
-        if (characters[i].human == false) {
-            var deltaX = getRandomInt(maxFerretMove);
-            var deltaY = getRandomInt(maxFerretMove);
-            var firstVariable = getRandomInt(2); // 0 = X, 1 = Y
+function getRandomDirection() {
+    // TODO more efficient code for this?
+    var direction = Math.floor(Math.random() * Math.floor(2));
 
-            if (firstVariable == 0) { // move along the X axis, then along the Y axis
-                for (let x = 0; x < deltaX; x++) {
-                    characters[i].move(1, 0);
-                }
-                for (let y = 0; y < deltaY; y++) {
-                    characters[i].move(0, 1);
-                }
-                console.log(characters[i].name + " moved " + deltaX + " tiles along the X axis and then " + deltaY + " tiles along the Y axis.");
-            } else { // move along the Y axis, then move along the X axis
-                for (let y = 0; y < deltaY; y++) {
-                    characters[i].move(0, 1);
-                }
-                for (let x = 0; x < deltaX; x++) {
-                    characters[i].move(1, 0);
-                }
-                console.log(characters[i].name + " moved " + deltaY + " tiles along the Y axis and " + deltaX + " tiles along the X axis.");
+    if (direction == 0) { // negative
+        direction = -1;
+    }
+
+    return direction;
+}
+
+function ferretMovement(ferret) {
+    // TODO find more efficient way to do this
+    if (ferret.queue.length == 0) {
+        var axis = getRandomInt(2); // 1 = X, 2 = Y
+        var absValue = getRandomInt(fMaxMove);
+        var delta = 1 * getRandomDirection();
+
+        if (axis == 1) { // move along the X axis
+            for (let x = 0; x < absValue; x++) {
+                ferret.queue.push(new Move('X', delta));
+            }
+        } else if (axis == 2) { // move along the Y axis
+            for (let y = 0; y < absValue; y++) {
+                ferret.queue.push(new Move('Y', delta));
             }
         }
-    } 
+    }
+
+    var move = ferret.queue.pop();
+
+    if (move.axis == 'X') {
+        ferret.move(move.delta, 0);
+    } else if (move.axis == 'Y') {
+        ferret.move(0, move.delta);
+    }
 }
 
 // ----- GAME LOGIC -----
@@ -234,7 +274,7 @@ var gameBoard = {
         cxt = this.context;
 
         // TODO - include pics of Grey after tearing up the dishwasher insulation and Ghost ripping up a piddle pad
-        // "this game is dedicated to my well-behaved ferrets Ghost & Grey Wind"
+        // 'this game is dedicated to my well-behaved ferrets Ghost & Grey Wind'
 
         // CANVAS DIMENSIONS
         can.width = tSize * bWidth;
@@ -250,12 +290,30 @@ var gameBoard = {
         greyWind.move(15, 16);
 
         // TODO character collision detection
+        // TODO characters rotating in the direction they move
+        // TODO random ferret pauses
+        // TODO your speed debuffs
+        // TODO score
     }
 }
 
 function startGame() {
-    console.log("Game started");
+    //console.log('Game started');
     // TODO game timer
     // TODO cannot move character until start has been pressed
-    ferretMovement(); // TODO while loop until timer is 0 (or something like that)
+
+    ghostMovement = setInterval(function() {
+        ferretMovement(ghost);
+    }, ghost.speed);
+
+    greyWindMovement = setInterval(function() {
+        ferretMovement(greyWind);
+    }, greyWind.speed);
+
+    // TODO wwhen timer is 0, clearInterval for both ferrets & freeze player
+}
+
+function pauseGame() {
+    clearInterval(ghostMovement);
+    clearInterval(greyWindMovement);
 }
