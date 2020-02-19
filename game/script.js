@@ -82,24 +82,7 @@ class Character {
             // TODO only do this calculation if direction is different
 
             if (this.direction != lastInput) {
-                if (Math.abs(deltaX) == 1) { // A & D
-                    console.log('A or D pressed');
-                    if (this.type == 'human') {
-                        this.height = pWidth;
-                        this.width = pHeight;
-                    } else if (this.type == 'ferret') {
-                        this.height = fHeight;
-                        this.width = fWidth;
-                    }
-
-                    if (deltaX == -1) { // move left (X axis)
-                        console.log('A pressed');
-                        this.direction = 'A';
-                    } else if (deltaX == 1) { // move right (X axis)
-                        this.direction = 'D';
-                    }
-                } else if (Math.abs(deltaY) == 1) { // W & S
-                    console.log('W or S pressed');
+                if (lastInput == 'W' || lastInput == 'S') {
                     if (this.type == 'human') {
                         this.height = pHeight;
                         this.width = pWidth;
@@ -108,12 +91,28 @@ class Character {
                         this.width = fHeight;
                     }
 
-                    if (deltaY == -1) { // move up (Y axis)
+                    if (lastInput == 'W') { // move up (Y axis)
                         console.log('W pressed');
                         this.direction = 'W';
-                    } else if (deltaY == 1) { // move down (Y axis)
+                    } else if (lastInput == 'S') { // move down (Y axis)
                         console.log('S pressed');
                         this.direction = 'S'
+                    }
+                } else if (lastInput == 'A' || lastInput == 'D') {
+                    if (this.type == 'human') {
+                        this.height = pWidth;
+                        this.width = pHeight;
+                    } else if (this.type == 'ferret') {
+                        this.height = fHeight;
+                        this.width = fWidth;
+                    }
+
+                    if (lastInput == 'A') { // move left (X axis)
+                        console.log('A pressed');
+                        this.direction = 'A';
+                    } else if (lastInput == 'D') { // move right (X axis)
+                        console.log('D pressed');
+                        this.direction = 'D';
                     }
                 }
             }
@@ -215,17 +214,45 @@ var madison, ghost, greyWind, actors, ferrets, boundaries;
 // ----- HELPER METHODS -----
 function keyDownHandler(e) {
     if (e.key == 'w' || e.key == 'Up' || e.key == 'ArrowUp') {
-        lastInput = 'W';
-        madison.move(0, -1);
+        // TODO find a better place to set new lastInput because it's currently very repetitive
+        if (lastInput == 'A') {
+            lastInput = 'W';
+            madison.move(0, 0);
+        } else if (lastInput == 'D') { // this accounts for the player not being a perfect square
+            lastInput = 'W';
+            madison.move(-1, 0);
+        } else {
+            lastInput = 'W';
+            madison.move(0, -1);
+        }
     } else if (e.key == 'a' || e.key == 'Left' || e.key == 'ArrowLeft') {
-        lastInput = 'A';
-        madison.move(-1, 0);
+        if (lastInput == 'W') { // this accounts for the player not being a perfect square
+            lastInput = 'A';
+            madison.move(0, 0);
+        } else if (lastInput == 'S') {
+            lastInput = 'A';
+            madison.move(0, -1);
+        } else { // A
+            lastInput = 'A';
+            madison.move(-1, 0);
+        }
     } else if (e.key == 's' || e.key == 'Down' || e.key == 'ArrowDown') {
-        lastInput = 'S';
-        madison.move(0, 1);
+        if (lastInput == 'D') {
+            // (9, 17) -> (8, 18)
+            lastInput = 'S';
+            madison.move(-1, 1);
+        } else {
+            lastInput = 'S';
+            madison.move(0, 1);
+        }
     } else if (e.key == 'd' || e.key == 'Right' || e.key == 'ArrowRight') {
-         lastInput = 'D';
-        madison.move(1, 0);
+        if (lastInput == 'S') {
+            lastInput = 'D';
+            madison.move(1, -1);
+        } else {
+            lastInput = 'D';
+            madison.move(1, 0);
+        }
     }
 }
 
