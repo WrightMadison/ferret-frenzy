@@ -1,158 +1,5 @@
 // TODO add px to rem converter helper method
 // TODO var or let - JS validator
-// TODO can this section be moved down? dont think so
-
-// ----- OBJECTS -----
-class Character {
-   constructor(name, type, width, height, speed, W, A, S, D) {
-        this.name = name;
-        this.type = type; // human, ferret, furniture
-        this.width = width; // tiles
-        this.height = height; // tiles
-        this.speed = speed; // timeout or interval in milliseconds
-        this.W = W; // file or URL
-        this.A = A; // file or URL
-        this.S = S; // file or URL
-        this.D = D; // file or URL
-        
-        this.direction = 'W'; // all characters start pointing north
-        this.left = 0; // tiles (x)
-        this.right = 0; // tiles
-        this.top = 0; // tiles (y)
-        this.bottom = 0; // tiles
-        this.image = new Image();
-        this.colliding = false;
-        this.queue = []; // list of queued moves
-    }
-    // TODO - player does not need list of queued moves, only ferrets (or maybe it will come in handy)
-
-    move(deltaX, deltaY) {
-        var newLeft = this.left + deltaX;
-        var newRight = newLeft + this.width;
-        var newTop = this.top + deltaY;
-        var newBottom = newTop + this.height;
-
-        // collision detection
-        for (let i = 0; i < boundaries.length; i++) {
-            let boundary = boundaries[i];
-
-            if (this.name != boundary.name && ((((newLeft >= boundary.left && newLeft < boundary.right) || (newRight > boundary.left && newRight <= boundary.right)) &&
-                ((newTop >= boundary.top && newTop < boundary.bottom) || (newBottom > boundary.top && newBottom <= boundary.bottom))) ||
-                (((boundary.left >= newLeft && boundary.left < newRight) || (boundary.right > newLeft && boundary.right <= newRight)) &&
-                ((boundary.top >= newTop && boundary.top < newBottom) || (boundary.bottom > newTop && boundary.bottom <= newBottom))))) {
-                this.colliding = true;
-
-                if (this.type == 'human') {
-                    if (boundary.type == 'furniture') {
-                        console.log('You stubbed your toe on the ' + boundary.name);
-                    } else if (boundary.type == 'ferret') {
-                        console.log('You ran into ' + boundary.name);
-                    }
-                    // TODO toe stub is based on top only (may want to correct later for accuracy)
-                    // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
-                    // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
-                    // TODO - you stepped in ferret poo (slowed?)
-                    // TODO increase collision box of ball pit
-                // TODO remove console messages for ferrets bonking their noses once ferret rotations work
-                } else if (this.type == 'ferret') {
-                    if (boundary.type == 'furniture') {
-                        console.log(this.name + ' bonked his nose on the ' + boundary.name);
-                        // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
-                        // TODO - ferrets are transparent when under the table and cage or inside rice box or cat condo to show their location
-                    } else if (boundary.type == 'ferret') {
-                        console.log(this.name + ' ran into ' + boundary.name);
-                        // TODO - the ferrets temporarily speed up
-                    } else if (boundary.type == 'human') {
-                        // TODO - this slows the player
-                        console.log(this.name + ' ran into ' + boundary.name + ', slowing you down.');
-                    }
-                }
-                break;
-            }
-        }
-
-        if (this.colliding == false) {
-            // clear previous location - bug with clearing at negative values (should not encounter anyway)
-            // (top left x, top left y, bottom right x, bottom right y)
-            cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
-
-            // TODO move rotation to be done first?
-            // absolute value of 1 means it is a normal WASD move and not a large board set-up translation
-
-            // TODO only do this calculation if direction is different
-
-            if (this.direction != lastInput) {
-                if (lastInput == 'W' || lastInput == 'S') {
-                    if (this.type == 'human') {
-                        this.height = pHeight;
-                        this.width = pWidth;
-                    } else if (this.type == 'ferret') {
-                        this.height = fWidth;
-                        this.width = fHeight;
-                    }
-
-                    if (lastInput == 'W') { // move up (Y axis)
-                        console.log('W pressed');
-                        this.direction = 'W';
-                    } else if (lastInput == 'S') { // move down (Y axis)
-                        console.log('S pressed');
-                        this.direction = 'S'
-                    }
-                } else if (lastInput == 'A' || lastInput == 'D') {
-                    if (this.type == 'human') {
-                        this.height = pWidth;
-                        this.width = pHeight;
-                    } else if (this.type == 'ferret') {
-                        this.height = fHeight;
-                        this.width = fWidth;
-                    }
-
-                    if (lastInput == 'A') { // move left (X axis)
-                        console.log('A pressed');
-                        this.direction = 'A';
-                    } else if (lastInput == 'D') { // move right (X axis)
-                        console.log('D pressed');
-                        this.direction = 'D';
-                    }
-                }
-            }
-
-            // update location
-            this.left = newLeft;
-            this.right = newLeft + this.width;
-            this.top = newTop;
-            this.bottom = newTop + this.height;
-            
-            // redraw all objects - TODO move this logic to redraw method?
-            for (let i = 0; i < actors.length; i++) {
-                redraw(actors[i]);
-            }
-        }
-
-        this.colliding = false;
-    }
-}
-
-class Boundary {
-    constructor(name, left, right, top, bottom) {
-        this.name = name;
-        this.type = 'furniture';
-        this.left = left;
-        this.right = right;
-        this.top = top;
-        this.bottom = bottom;
-    }
-}
-
-// TODO come up with better name
-class Move {
-    constructor(axis, delta) {
-        this.axis = axis;
-        this.delta = delta;
-    }
-}
-
-// TODO may be able to move this up
 
 // ----- SETUP -----
 document.addEventListener('keydown', keyDownHandler, false);
@@ -206,51 +53,219 @@ var upPressed = false; // W
 var leftPressed = false; // A
 var downPressed = false; // S
 var rightPressed = false; // D
-var lastInput = 'W'; // all characters start pointing north
 
 // Objects
 var madison, ghost, greyWind, actors, ferrets, boundaries;
 
+// ----- OBJECT CLASSES -----
+class Character {
+   constructor(name, type, width, height, speed, W, A, S, D) {
+        this.name = name;
+        this.type = type; // human, ferret, furniture
+        this.width = width; // tiles
+        this.height = height; // tiles
+        this.speed = speed; // timeout or interval in milliseconds
+        this.W = W; // file or URL
+        this.A = A; // file or URL
+        this.S = S; // file or URL
+        this.D = D; // file or URL
+        
+        this.lastInput = 'W'; // all characters start pointing north
+        this.direction = 'W'; // all characters start pointing north
+        this.left = 0; // tiles (x)
+        this.right = 0; // tiles
+        this.top = 0; // tiles (y)
+        this.bottom = 0; // tiles
+        this.image = new Image();
+        this.colliding = false;
+        this.queue = []; // list of queued moves
+    }
+    // TODO - player does not need list of queued moves, only ferrets (or maybe it will come in handy)
+
+    move(deltaX, deltaY) {
+        // temporary test rotation
+        // save current state
+        var originalState = [this.height, this.width, this.lastInput, this.direction];
+
+        // undergo rotation
+        this.rotate();
+
+        // TODO test this rotation logic
+        // new location
+        var newLeft = this.left + deltaX;
+        var newRight = newLeft + this.width;
+        var newTop = this.top + deltaY;
+        var newBottom = newTop + this.height;
+
+        // collision detection
+        for (let i = 0; i < boundaries.length; i++) {
+            let boundary = boundaries[i];
+
+            if (this.name != boundary.name &&
+                ((((newLeft >= boundary.left && newLeft < boundary.right) || (newRight > boundary.left && newRight <= boundary.right)) &&
+                 ((newTop >= boundary.top && newTop < boundary.bottom) || (newBottom > boundary.top && newBottom <= boundary.bottom))) ||
+                (((boundary.left >= newLeft && boundary.left < newRight) || (boundary.right > newLeft && boundary.right <= newRight)) &&
+                ((boundary.top >= newTop && boundary.top < newBottom) || (boundary.bottom > newTop && boundary.bottom <= newBottom))))) {
+                this.colliding = true;
+
+
+                if (this.type == 'human') {
+                    if (boundary.type == 'furniture') {
+                        console.log('You stubbed your toe on the ' + boundary.name);
+                        console.log(boundary.name + ' Location: (' + boundary.left + ', ' + boundary.top + ')');
+                        console.log('Attempted Location: (' + newLeft + ", " + newTop + ")");
+                        console.log('Current Location: (' + this.left + ", " + this.top + ")");
+                    } else if (boundary.type == 'ferret') {
+                        console.log('You ran into ' + boundary.name);
+                    }
+                    // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
+                    // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
+                    // TODO - you stepped in ferret poo (slowed?)
+                    // TODO increase collision box of ball pit
+                // TODO remove console messages for ferrets bonking their noses once ferret rotations work
+                } else if (this.type == 'ferret') {
+                    if (boundary.type == 'furniture') {
+                        console.log(this.name + ' bonked his nose on the ' + boundary.name);
+                        // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
+                        // TODO - ferrets are transparent when under the table and cage or inside rice box or cat condo to show their location
+                    } else if (boundary.type == 'ferret') {
+                        console.log(this.name + ' ran into ' + boundary.name);
+                        // TODO - the ferrets temporarily speed up
+                    } else if (boundary.type == 'human') {
+                        // TODO - this slows the player
+                        console.log(this.name + ' ran into ' + boundary.name + ', slowing you down.');
+                    }
+                }
+
+                // rotate back
+                this.height = originalState[0];
+                this.width = originalState[1];
+                this.lastInput = originalState[2];
+                this.direction = originalState[3];
+                break;
+            }
+        }
+
+        if (this.colliding == false) {
+            // clear previous location - bug with clearing at negative values (should not encounter anyway)
+            // (top left x, top left y, bottom right x, bottom right y)
+            cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
+
+            // permanent rotation
+            this.rotate();
+
+            // update location
+            this.left = newLeft;
+            this.right = newLeft + this.width;
+            this.top = newTop;
+            this.bottom = newTop + this.height;
+            
+            // redraw all actors
+            redrawActors();
+        }
+
+        this.colliding = false;
+    }
+
+    rotate() {
+        // only rotate if last direction is different from new one
+        if (this.direction != this.lastInput) {
+            if (this.lastInput == 'W' || this.lastInput == 'S') {
+                if (this.type == 'human') {
+                    this.height = pHeight;
+                    this.width = pWidth;
+                } else if (this.type == 'ferret') {
+                    this.height = fWidth;
+                    this.width = fHeight;
+                }
+
+                if (this.lastInput == 'W') { // move up (Y axis)
+                    console.log('W pressed');
+                    this.direction = 'W';
+                } else if (this.lastInput == 'S') { // move down (Y axis)
+                    console.log('S pressed');
+                    this.direction = 'S'
+                }
+            } else if (this.lastInput == 'A' || this.lastInput == 'D') {
+                if (this.type == 'human') {
+                    this.height = pWidth;
+                    this.width = pHeight;
+                } else if (this.type == 'ferret') {
+                    this.height = fHeight;
+                    this.width = fWidth;
+                }
+
+                if (this.lastInput == 'A') { // move left (X axis)
+                    console.log('A pressed');
+                    this.direction = 'A';
+                } else if (this.lastInput == 'D') { // move right (X axis)
+                    console.log('D pressed');
+                    this.direction = 'D';
+                }
+            }
+        }
+    }
+}
+
+class Boundary {
+    constructor(name, left, right, top, bottom) {
+        this.name = name;
+        this.type = 'furniture';
+        this.left = left;
+        this.right = right;
+        this.top = top;
+        this.bottom = bottom;
+    }
+}
+
+// TODO come up with better name
+class Move {
+    constructor(axis, delta) {
+        this.axis = axis;
+        this.delta = delta;
+    }
+}
+
 // ----- HELPER METHODS -----
 function keyDownHandler(e) {
-    if (e.key == 'w' || e.key == 'Up' || e.key == 'ArrowUp') {
+    if (e.key == 'w' || e.key == 'W' || e.key == 'Up' || e.key == 'ArrowUp') {
         // TODO find a better place to set new lastInput because it's currently very repetitive
-        if (lastInput == 'A') {
-            lastInput = 'W';
+        if (madison.lastInput == 'A') {
+            madison.lastInput = 'W';
             madison.move(0, 0);
-        } else if (lastInput == 'D') { // this accounts for the player not being a perfect square
-            lastInput = 'W';
+        } else if (madison.lastInput == 'D') { // this accounts for the player not being a perfect square
+            madison.lastInput = 'W';
             madison.move(-1, 0);
         } else {
-            lastInput = 'W';
+            madison.lastInput = 'W';
             madison.move(0, -1);
         }
-    } else if (e.key == 'a' || e.key == 'Left' || e.key == 'ArrowLeft') {
-        if (lastInput == 'W') { // this accounts for the player not being a perfect square
-            lastInput = 'A';
+    } else if (e.key == 'a' || e.key == 'A' || e.key == 'Left' || e.key == 'ArrowLeft') {
+        if (madison.lastInput == 'W') { // this accounts for the player not being a perfect square
+            madison.lastInput = 'A';
             madison.move(0, 0);
-        } else if (lastInput == 'S') {
-            lastInput = 'A';
+        } else if (madison.lastInput == 'S') {
+            madison.lastInput = 'A';
             madison.move(0, -1);
         } else { // A
-            lastInput = 'A';
+            madison.lastInput = 'A';
             madison.move(-1, 0);
         }
-    } else if (e.key == 's' || e.key == 'Down' || e.key == 'ArrowDown') {
-        if (lastInput == 'D') {
+    } else if (e.key == 's' || e.key == 'S' || e.key == 'Down' || e.key == 'ArrowDown') {
+        if (madison.lastInput == 'D') {
             // (9, 17) -> (8, 18)
-            lastInput = 'S';
+            madison.lastInput = 'S';
             madison.move(-1, 1);
         } else {
-            lastInput = 'S';
+            madison.lastInput = 'S';
             madison.move(0, 1);
         }
-    } else if (e.key == 'd' || e.key == 'Right' || e.key == 'ArrowRight') {
-        if (lastInput == 'S') {
-            lastInput = 'D';
+    } else if (e.key == 'd' || e.key == 'D' || e.key == 'Right' || e.key == 'ArrowRight') {
+        if (madison.lastInput == 'S') {
+            madison.lastInput = 'D';
             madison.move(1, -1);
         } else {
-            lastInput = 'D';
+            madison.lastInput = 'D';
             madison.move(1, 0);
         }
     }
@@ -260,7 +275,7 @@ function px(tile) { // convert tiles to pixels
     return tile * tSize;
 }
 
-function redraw() {
+function redrawActors() {
     // all game objects must redrawn after each move
     for (let i = 0; i < actors.length; i++) {
         actors[i].image.addEventListener('load', function() {
@@ -315,10 +330,20 @@ function ferretMovement(ferret) {
 
     var move = ferret.queue.pop();
 
-    if (move.axis == 'X') {
-        ferret.move(move.delta, 0);
-    } else if (move.axis == 'Y') {
+    if (move.axis == 'Y') {
+        if (move.delta == -1) {
+            ferret.lastInput = 'W';
+        } else if (move.delta == 1) {
+            ferret.lastInput == 'D';
+        }
         ferret.move(0, move.delta);
+    } else if (move.axis == 'X') {
+        if (move.delta == -1) {
+            ferret.lastInput = 'A';
+        } else if (move.delta == 1) {
+            ferret.lastInput = 'D';
+        }
+        ferret.move(move.delta, 0);
     }
 }
 
@@ -416,6 +441,8 @@ function startGame() {
     greyWindMovement = setInterval(function() {
         ferretMovement(greyWind);
     }, greyWind.speed);
+
+    // TODO user can click on items to display what they are
 
     // TODO wwhen timer is 0, clearInterval for both ferrets & freeze player
 }
