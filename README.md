@@ -20,14 +20,10 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
     * [The W3C Markup Validation Service](https://validator.w3.org/)
     * [The W3C CSS Validation Service](https://jigsaw.w3.org/css-validator/)
 
-## Art Credits
-* Ferret Sprites - [TriggerHappyTom](https://www.pixilart.com/triggerhappytom)
-    * [Albino Ferret Gif](https://www.pixilart.com/art/ferret-albino-animated-ac307a2df49adec)
-    * [Masked Sable Ferret Gif](https://www.pixilart.com/art/ferret-1-animated-c02f23164f6d853)
-
 ## Timeline
 * **February 1, 2020** - started to make the game around 10:00 PM and worked on it sporadically until about 4:00 AM
 * **February 2, 2020** - coded for a few more hours before running demos at the end of Global Game Jam at 5:00 PM
 * **February 5, 2020** - coded for a couple hours late at night until just after midnight
 * **February 16, 2020** - picked development back up in the evening
-* **February 17, 2020** - continued development throughout the day
+* **February 17, 2020** - continued development sporadically throughout the day and into the early hours of the next day
+* **February 18, 2020** - picked up development again in the late afternoon

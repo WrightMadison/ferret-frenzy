@@ -1,22 +1,25 @@
 // https://developer.mozilla.org/en-US/docs/Games/Tutorials/2D_Breakout_game_pure_JavaScript
+// https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Using_images
 
 // TODO add px to rem converter helper method
 // TODO var or let - JS validator
+// TODO can this section be moved down? dont think so
 
 // ----- OBJECTS -----
 class Character {
-   constructor(name, type, color, width, height, speed) {
+   constructor(name, type, source, width, height, speed) {
         this.name = name;
-        this.type = type;
-        this.color = color;
+        this.type = type; // human, ferret, furniture
+        this.image = new Image();
+        this.source = source; // file or URL
         this.width = width; // tiles
         this.height = height; // tiles
-        this.speed = speed; // timeout or interval in milliseconds
-        this.left = 0; // tiles
-        this.right = 0;
-        this.top = 0; // tiles
-        this.bottom = 0;
+        this.left = 0; // tiles (x)
+        this.right = 0; // tiles
+        this.top = 0; // tiles (y)
+        this.bottom = 0; // tiles
         this.colliding = false;
+        this.speed = speed; // timeout or interval in milliseconds
         this.queue = []; // list of queued moves
     }
     // TODO - player does not need list of queued moves, only ferrets (or maybe it will come in handy)
@@ -50,8 +53,8 @@ class Character {
                 } else if (this.type == 'ferret') {
                     if (boundary.type == 'furniture') {
                         console.log(this.name + ' bonked his nose on the ' + boundary.name);
-                        // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes)
-
+                        // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
+                        // TODO - ferrets are transparent when under the table and cage or inside rice box or cat condo to show their location
                     } else if (boundary.type == 'ferret') {
                         console.log(this.name + ' ran into ' + boundary.name);
                         // TODO - the ferrets temporarily speed up
@@ -69,6 +72,14 @@ class Character {
             // (top left x, top left y, bottom right x, bottom right y)
             cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
 
+            // if (Math.abs(deltaX) == 1 && deltaX != 0 && this.type == 'ferret') {
+            //     this.height = fHeight;
+            //     this.width = fWidth;
+            // } else if (Math.abs(deltaY) && deltaY != 0 && this.type == 'ferret') {
+            //     this.height = fWidth;
+            //     this.width = fHeight;
+            // }
+
             // update location
             this.left = newLeft;
             this.right = newLeft + this.width;
@@ -76,8 +87,8 @@ class Character {
             this.bottom = newTop + this.height;
             
             // redraw all objects
-            for (let i = 0; i < characters.length; i++) {
-                redraw(characters[i]);
+            for (let i = 0; i < actors.length; i++) {
+                redraw(actors[i]);
             }
         }
 
@@ -109,37 +120,46 @@ document.addEventListener('keyup', keyUpHandler, false);
 
 // ----- VARIABLES -----
 // Game States
-var ghostMovement;
-var greyWindMovement;
+var ghostMovement; // setInterval
+var greyWindMovement; // setInterval
 
 // Tile Dimensions
 var tSize = 20; // pixels
 
 // Board Dimensions
-var can;
-var cxt;
+var can; // canvas
+var cxt; // context
 var bWidth = 32; // tiles
 var bHeight = 26; // tiles
 
-// Player Dimensions
+// Player Settings
 var pWidth = 3; // tiles
-var pHeight = 3; // tiles
+var pHeight = 2; // tiles
+var pBaseSlows = 0; // milliseconds
+var imgMadison = new Image();
+var imgMadisonSrc = '../images/madison.png';
 
-// Ferret Dimensions
+// Ferret Settings
 var fWidth = 1; // tiles
 var fHeight = 3; // tiles
-
-// Character Settings
 var fMaxMove = 3; // tiles (inclusive)
-var fBaseSpeed = 500;
-var pBaseSlows = 0;
+var fBaseSpeed = 500; // milliseconds
+var imgGhost = new Image();
+var imgGhostSrc = '../images/ghost.png';
+var imgGreyWind = new Image();
+var imgGreyWindSrc = '../images/grey-wind.png';
+
+// Inputs
+var upPressed = false; // W
+var leftPressed = false; // A
+var downPressed = false; // S
+var rightPressed = false; // D
 
 // Objects
-var madison = new Character('Madison', 'human', '#5BFF33', pWidth, pHeight, 0);
-//var madison = new Character('tester', 'human', '#FF00FF', 1, 1, 0); // 1x1 test character
-var ghost = new Character('Ghost', 'ferret', '#FFFFFF', fWidth, fHeight, fBaseSpeed);
-var greyWind = new Character('Grey Wind', 'ferret', '#7A4218', fWidth, fHeight, fBaseSpeed);
-var characters = [madison, ghost, greyWind];
+var madison = new Character('Madison', 'human', imgMadisonSrc, pWidth, pHeight, pBaseSlows);
+var ghost = new Character('Ghost', 'ferret', imgGhostSrc, fWidth, fHeight, fBaseSpeed);
+var greyWind = new Character('Grey Wind', 'ferret', imgGreyWindSrc, fWidth, fHeight, fBaseSpeed);
+var actors = [madison, ghost, greyWind];
 var ferrets = [ghost, greyWind];
 // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
 var boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
@@ -173,13 +193,7 @@ var boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
                   new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
                   new Boundary('kitchen table', 12, 18, 10, 16), // 29
                   new Boundary('plastic ball pit', 22, 24, 15, 17), // 30
-                  madison, ghost, greyWind] // must check against other characters as well
-
-// Inputs
-var upPressed = false; // W
-var leftPressed = false; // A
-var downPressed = false; // S
-var rightPressed = false; // D
+                  madison, ghost, greyWind] // must check against other actors as well
 
 // ----- HELPER METHODS -----
 function keyDownHandler(e) {
@@ -210,13 +224,19 @@ function px(tile) { // convert tiles to pixels
     return tile * tSize;
 }
 
-function redraw(character) {
+function redraw(actor) {
     // all game objects must redrawn after each move
-    cxt.beginPath();
-    cxt.rect(px(character.left), px(character.top), px(character.width), px(character.height)); // rect(x, y, width, height)
-    cxt.fillStyle = character.color;
-    cxt.fill();
-    cxt.closePath();
+    actor.image.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(actor.image, px(actor.left), px(actor.top), px(actor.width), px(actor.height));
+    }, false);
+    actor.image.src = actor.source;
+
+    // cxt.beginPath();
+    // cxt.rect(px(actor.left), px(actor.top), px(actor.width), px(actor.height)); // rect(x, y, width, height)
+    // cxt.fillStyle = actor.color;
+    // cxt.fill();
+    // cxt.closePath();
 }
 
 function getRandomInt(max) {
@@ -264,12 +284,12 @@ function ferretMovement(ferret) {
 
 // ----- GAME LOGIC -----
 function loadBoard() {
-    gameBoard.start();
-}
+    gameBoard.load();
+} // TODO put in one method
 
 var gameBoard = {
     canvas : document.createElement('canvas'),
-    start : function() {
+    load : function() {
         can = this.canvas;
         cxt = this.context;
 
@@ -284,13 +304,13 @@ var gameBoard = {
         cxt = can.getContext('2d');
         document.body.insertBefore(can, document.body.childNodes[0]);
 
-        // place characters on board
-        madison.move(8, 21);
+        // place actors on board
+        madison.move(8, 22);
         ghost.move(14, 16);
         greyWind.move(15, 16);
-
-        // TODO character collision detection
-        // TODO characters rotating in the direction they move
+        
+        // TODO actor collision detection
+        // TODO actors rotating in the direction they move
         // TODO random ferret pauses
         // TODO your speed debuffs
         // TODO score
@@ -298,9 +318,9 @@ var gameBoard = {
 }
 
 function startGame() {
-    //console.log('Game started');
+    console.log('Game started');
     // TODO game timer
-    // TODO cannot move character until start has been pressed
+    // TODO cannot move actor until start has been pressed
 
     ghostMovement = setInterval(function() {
         ferretMovement(ghost);
@@ -314,6 +334,7 @@ function startGame() {
 }
 
 function pauseGame() {
+    console.log('Game paused');
     clearInterval(ghostMovement);
     clearInterval(greyWindMovement);
 }
