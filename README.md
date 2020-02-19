@@ -16,6 +16,8 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
 * Game Design Document - *to be created soon*
 
 ## Resources
+No libraries were used to create this game. Only HTML and CSS validators were used to make sure my code is clean.
+
 * The World Wide Web Consortium (W3C)
     * [The W3C Markup Validation Service](https://validator.w3.org/)
     * [The W3C CSS Validation Service](https://jigsaw.w3.org/css-validator/)
