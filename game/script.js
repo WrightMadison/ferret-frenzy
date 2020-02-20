@@ -112,11 +112,8 @@ class Character {
                 if (this.type == 'human') {
                     if (boundary.type == 'furniture') {
                         console.log('You stubbed your toe on the ' + boundary.name);
-                        console.log(boundary.name + ' Location: (' + boundary.left + ', ' + boundary.top + ')');
-                        console.log('Attempted Location: (' + newLeft + ", " + newTop + ")");
-                        console.log('Current Location: (' + this.left + ", " + this.top + ")");
                     } else if (boundary.type == 'ferret') {
-                        console.log('You ran into ' + boundary.name);
+                        console.log(this.name + ' tripped over ' + boundary.name + ', slowing you down.');
                     }
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
@@ -125,7 +122,6 @@ class Character {
                 // TODO remove console messages for ferrets bonking their noses once ferret rotations work
                 } else if (this.type == 'ferret') {
                     if (boundary.type == 'furniture') {
-                        console.log(this.name + ' bonked his nose on the ' + boundary.name);
                         // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
                         // TODO - ferrets are transparent when under the table and cage or inside rice box or cat condo to show their location
                     } else if (boundary.type == 'ferret') {
@@ -133,9 +129,10 @@ class Character {
                         // TODO - the ferrets temporarily speed up
                     } else if (boundary.type == 'human') {
                         // TODO - this slows the player
-                        console.log(this.name + ' ran into ' + boundary.name + ', slowing you down.');
+                        console.log(this.name + ' attacked your shoes and slowed you down.');
                     }
                 }
+                // TODO ghost and grey wind ran into each other
 
                 // rotate back
                 this.height = originalState[0];
@@ -167,6 +164,7 @@ class Character {
         this.colliding = false;
     }
 
+    // TODO figure out issue with S ferret pics
     rotate() {
         // only rotate if last direction is different from new one
         if (this.direction != this.lastInput) {
@@ -175,15 +173,13 @@ class Character {
                     this.height = pHeight;
                     this.width = pWidth;
                 } else if (this.type == 'ferret') {
-                    this.height = fWidth;
-                    this.width = fHeight;
+                    this.height = fHeight;
+                    this.width = fWidth;
                 }
 
                 if (this.lastInput == 'W') { // move up (Y axis)
-                    console.log('W pressed');
                     this.direction = 'W';
                 } else if (this.lastInput == 'S') { // move down (Y axis)
-                    console.log('S pressed');
                     this.direction = 'S'
                 }
             } else if (this.lastInput == 'A' || this.lastInput == 'D') {
@@ -191,15 +187,13 @@ class Character {
                     this.height = pWidth;
                     this.width = pHeight;
                 } else if (this.type == 'ferret') {
-                    this.height = fHeight;
-                    this.width = fWidth;
+                    this.height = fWidth;
+                    this.width = fHeight;
                 }
 
                 if (this.lastInput == 'A') { // move left (X axis)
-                    console.log('A pressed');
                     this.direction = 'A';
                 } else if (this.lastInput == 'D') { // move right (X axis)
-                    console.log('D pressed');
                     this.direction = 'D';
                 }
             }
@@ -218,15 +212,16 @@ class Boundary {
     }
 }
 
-// TODO come up with better name
-class Move {
-    constructor(axis, delta) {
-        this.axis = axis;
-        this.delta = delta;
-    }
+// ----- HELPER METHODS -----
+function px(tile) { // convert tiles to pixels
+    return tile * tSize;
 }
 
-// ----- HELPER METHODS -----
+function getRandomInt(max) {
+    // returns a random number between 1 and max (inclusive)
+    return Math.floor(Math.random() * max) + 1;
+}
+
 function keyDownHandler(e) {
     if (e.key == 'w' || e.key == 'W' || e.key == 'Up' || e.key == 'ArrowUp') {
         // TODO find a better place to set new lastInput because it's currently very repetitive
@@ -253,7 +248,6 @@ function keyDownHandler(e) {
         }
     } else if (e.key == 's' || e.key == 'S' || e.key == 'Down' || e.key == 'ArrowDown') {
         if (madison.lastInput == 'D') {
-            // (9, 17) -> (8, 18)
             madison.lastInput = 'S';
             madison.move(-1, 1);
         } else {
@@ -271,8 +265,33 @@ function keyDownHandler(e) {
     }
 }
 
-function px(tile) { // convert tiles to pixels
-    return tile * tSize;
+function ferretMovement(ferret) {
+    if (ferret.queue.length == 0) {
+        var direction = getRandomInt(4); // 1 = W, 2 = A, 3 = S, 4 = D
+
+        if (direction == 1) {
+            ferret.queue.push('W');
+        } else if (direction == 2) {
+            ferret.queue.push('A');
+        } else if (direction == 3) {
+            ferret.queue.push('S');
+        } else if (direction == 4) {
+            ferret.queue.push('D');
+        }
+    }
+
+    var nextMove = ferret.queue.pop();
+    ferret.lastInput = nextMove;
+
+    if (nextMove == 'W') {
+        ferret.move(0, -1);
+    } else if (nextMove == 'A') {
+        ferret.move(-1, 0);
+    } else if (nextMove == 'S') {
+        ferret.move(0, 1);
+    } else if (nextMove == 'D') {
+        ferret.move(1, 0);
+    }
 }
 
 function redrawActors() {
@@ -291,59 +310,6 @@ function redrawActors() {
         } else if (actors[i].direction == 'D') {
             actors[i].image.src = actors[i].D;
         }
-    }
-}
-
-function getRandomInt(max) {
-    // returns a random number between 1 and max (inclusive)
-    return Math.floor(Math.random() * max) + 1;
-}
-
-function getRandomDirection() {
-    // TODO more efficient code for this?
-    var direction = Math.floor(Math.random() * Math.floor(2));
-
-    if (direction == 0) { // negative
-        direction = -1;
-    }
-
-    return direction;
-}
-
-function ferretMovement(ferret) {
-    // TODO find more efficient way to do this
-    if (ferret.queue.length == 0) {
-        var axis = getRandomInt(2); // 1 = X, 2 = Y
-        var absValue = getRandomInt(fMaxMove);
-        var delta = 1 * getRandomDirection();
-
-        if (axis == 1) { // move along the X axis
-            for (let x = 0; x < absValue; x++) {
-                ferret.queue.push(new Move('X', delta));
-            }
-        } else if (axis == 2) { // move along the Y axis
-            for (let y = 0; y < absValue; y++) {
-                ferret.queue.push(new Move('Y', delta));
-            }
-        }
-    }
-
-    var move = ferret.queue.pop();
-
-    if (move.axis == 'Y') {
-        if (move.delta == -1) {
-            ferret.lastInput = 'W';
-        } else if (move.delta == 1) {
-            ferret.lastInput == 'D';
-        }
-        ferret.move(0, move.delta);
-    } else if (move.axis == 'X') {
-        if (move.delta == -1) {
-            ferret.lastInput = 'A';
-        } else if (move.delta == 1) {
-            ferret.lastInput = 'D';
-        }
-        ferret.move(move.delta, 0);
     }
 }
 
@@ -409,18 +375,18 @@ var gameBoard = {
                       new Boundary('cat condo', 20, 22, 22, 24), // 22
                       new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
                       new Boundary('ferret cage', 12, 18, 20, 24), // 24
-                      new Boundary('cat post', 14, 16, 19, 20), // 25
+                      new Boundary('cat post', 14, 16, 18, 20), // 25
                       new Boundary('grey litter box', 4, 6, 21, 24), // 26
                       new Boundary('trash cans', 4, 6, 16, 21), // 27
                       new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
-                      new Boundary('kitchen table', 12, 18, 10, 16), // 29
-                      new Boundary('plastic ball pit', 22, 24, 15, 17), // 30
+                      new Boundary('kitchen table', 12, 17, 10, 15), // 29
+                      new Boundary('plastic ball pit', 21, 25, 14, 18), // 30
                       madison, ghost, greyWind] // must check against other actors as well
 
         // place actors on board
         madison.move(8, 22);
-        ghost.move(14, 16);
-        greyWind.move(15, 16);
+        ghost.move(14, 15);
+        greyWind.move(15, 15);
         
         // TODO actors rotating in the direction they move
         // TODO random ferret pauses

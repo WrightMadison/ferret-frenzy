@@ -1,6 +1,6 @@
 canvas {
     /*TODO border: 1px solid #d3d3d3;*/
-    background-image: url("../images/board-grid.png");
+    background-image: url("../images/board.png");
     background-size: 640px 520px; /* bWidth * tSize, bHeight * tSize */
 }
 
