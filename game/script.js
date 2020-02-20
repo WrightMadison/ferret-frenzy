@@ -380,7 +380,9 @@ var gameBoard = {
                       new Boundary('trash cans', 4, 6, 16, 21), // 27
                       new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
                       new Boundary('kitchen table', 12, 17, 10, 15), // 29
-                      new Boundary('plastic ball pit', 21, 25, 14, 18), // 30
+                      new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
+                      new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
+                      new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
                       madison, ghost, greyWind] // must check against other actors as well
 
         // place actors on board
