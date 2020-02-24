@@ -113,7 +113,7 @@ class Character {
                     if (boundary.type == 'furniture') {
                         console.log('You stubbed your toe on the ' + boundary.name);
                     } else if (boundary.type == 'ferret') {
-                        console.log(this.name + ' tripped over ' + boundary.name + ', slowing you down.');
+                        console.log('You tripped over ' + boundary.name + ', slowing you down.');
                     }
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
@@ -222,13 +222,13 @@ function getRandomInt(max) {
     return Math.floor(Math.random() * max) + 1;
 }
 
+// // the custom movements account for the player not being a perfect square
 function keyDownHandler(e) {
     if (e.key == 'w' || e.key == 'W' || e.key == 'Up' || e.key == 'ArrowUp') {
-        // TODO find a better place to set new lastInput because it's currently very repetitive
         if (madison.lastInput == 'A') {
             madison.lastInput = 'W';
             madison.move(0, 0);
-        } else if (madison.lastInput == 'D') { // this accounts for the player not being a perfect square
+        } else if (madison.lastInput == 'D') {
             madison.lastInput = 'W';
             madison.move(-1, 0);
         } else {
@@ -236,13 +236,13 @@ function keyDownHandler(e) {
             madison.move(0, -1);
         }
     } else if (e.key == 'a' || e.key == 'A' || e.key == 'Left' || e.key == 'ArrowLeft') {
-        if (madison.lastInput == 'W') { // this accounts for the player not being a perfect square
+        if (madison.lastInput == 'W') {
             madison.lastInput = 'A';
             madison.move(0, 0);
         } else if (madison.lastInput == 'S') {
             madison.lastInput = 'A';
             madison.move(0, -1);
-        } else { // A
+        } else {
             madison.lastInput = 'A';
             madison.move(-1, 0);
         }
@@ -267,30 +267,72 @@ function keyDownHandler(e) {
 
 function ferretMovement(ferret) {
     if (ferret.queue.length == 0) {
-        var direction = getRandomInt(4); // 1 = W, 2 = A, 3 = S, 4 = D
+        var randDirection = getRandomInt(4); // 1 = W, 2 = A, 3 = S, 4 = D
+        var direction;
+        var distance = getRandomInt(3);
 
-        if (direction == 1) {
-            ferret.queue.push('W');
-        } else if (direction == 2) {
-            ferret.queue.push('A');
-        } else if (direction == 3) {
-            ferret.queue.push('S');
-        } else if (direction == 4) {
-            ferret.queue.push('D');
+        if (randDirection == 1) {
+            direction = 'W';
+        } else if (randDirection == 2) {
+            direction = 'A';
+        } else if (randDirection == 3) {
+            direction = 'S';
+        } else if (randDirection == 4) {
+            direction = 'D';
+        }
+
+        for (let i = 0; i < distance; i++) {
+            ferret.queue.push(direction);
         }
     }
 
     var nextMove = ferret.queue.pop();
-    ferret.lastInput = nextMove;
 
+    // the custom movements account for the ferrets not being perfect squares
     if (nextMove == 'W') {
-        ferret.move(0, -1);
+        if (ferret.lastInput == 'W') {
+            ferret.lastInput = 'W';
+            ferret.move(0, -1);
+        } else if (ferret.lastInput == 'A' || ferret.lastInput == 'D') {
+            ferret.lastInput = 'W';
+            ferret.move(1, -1);
+        } else if (ferret.lastInput == 'S') {
+            ferret.lastInput = 'W';
+            ferret.move(0, 0);
+        }
     } else if (nextMove == 'A') {
-        ferret.move(-1, 0);
+        if (ferret.lastInput == 'W' || ferret.lastInput == 'S') {
+            ferret.lastInput = 'A';
+            ferret.move(-1, 1);
+        } else if (ferret.lastInput == 'A') {
+            ferret.lastInput = 'A';
+            ferret.move(-1, 0);
+        } else if (ferret.lastInput == 'D') {
+            ferret.lastInput = 'A';
+            ferret.move(0, 0);
+        }
     } else if (nextMove == 'S') {
-        ferret.move(0, 1);
+        if (ferret.lastInput == 'W') {
+            ferret.lastInput = 'S';
+            ferret.move(0, 0);
+        } else if (ferret.lastInput == 'A' || ferret.lastInput == 'D') {
+            ferret.lastInput = 'S';
+            ferret.move(1, -1);
+        } else if (ferret.lastInput == 'S') {
+            ferret.lastInput = 'S';
+            ferret.move(0, 1);
+        }
     } else if (nextMove == 'D') {
-        ferret.move(1, 0);
+        if (ferret.lastInput == 'W' || ferret.lastInput == 'S') {
+            ferret.lastInput = 'D';
+            ferret.move(-1, 1);
+        } else if (ferret.lastInput == 'A') {
+            ferret.lastInput = 'D';
+            ferret.move(0, 0);
+        } else if (ferret.lastInput == 'D') {
+            ferret.lastInput = 'D';
+            ferret.move(1, 0);
+        }
     }
 }
 
@@ -387,13 +429,13 @@ var gameBoard = {
 
         // place actors on board
         madison.move(8, 22);
-        ghost.move(14, 15);
-        greyWind.move(15, 15);
+        ghost.move(6, 9);
+        greyWind.move(21, 19);
         
-        // TODO actors rotating in the direction they move
-        // TODO random ferret pauses
-        // TODO your speed debuffs
+        // TODO ferrets rotate on top of each other sometimes
+        // TODO player speed debuffs
         // TODO score
+        // TODO make a faint outline around final grid so boundaries are easy to identify
     }
 }
 
