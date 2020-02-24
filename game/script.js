@@ -6,8 +6,16 @@ document.addEventListener('keydown', keyDownHandler, false);
 
 // ----- VARIABLES -----
 // Game States
-var ghostMovement; // setInterval
-var greyWindMovement; // setInterval
+var ghostMovement; // TODO setInterval
+var greyWindMovement; // TODO setInterval
+var timer; // setInterval
+
+// Timer
+var totalTime = 60000; // milliseconds
+var gameTime = totalTime; // milliseconds
+var timeElapsed = 0; // milliseconds
+var timeInterval = 100; // milliseconds
+var timerStarted; // Date.now()
 
 // Tile Dimensions
 var tSize = 20; // pixels
@@ -59,12 +67,14 @@ var madison, ghost, greyWind, actors, ferrets, boundaries;
 
 // ----- OBJECT CLASSES -----
 class Character {
-   constructor(name, type, width, height, speed, W, A, S, D) {
+   constructor(name, type, width, height, speed, xStart, yStart, W, A, S, D) {
         this.name = name;
         this.type = type; // human, ferret, furniture
         this.width = width; // tiles
         this.height = height; // tiles
         this.speed = speed; // timeout or interval in milliseconds
+        this.xStart = xStart;
+        this.yStart = yStart;
         this.W = W; // file or URL
         this.A = A; // file or URL
         this.S = S; // file or URL
@@ -164,7 +174,6 @@ class Character {
         this.colliding = false;
     }
 
-    // TODO figure out issue with S ferret pics
     rotate() {
         // only rotate if last direction is different from new one
         if (this.direction != this.lastInput) {
@@ -198,6 +207,14 @@ class Character {
                 }
             }
         }
+    }
+
+    reset() {
+        this.lastInput = 'W';
+        this.rotate();
+        var deltaX = this.xStart - this.left;
+        var deltaY = this.yStart - this.top;
+        this.move(deltaX, deltaY);
     }
 }
 
@@ -355,6 +372,14 @@ function redrawActors() {
     }
 }
 
+function timePrecision(x) {
+  return (Number.parseFloat(x).toPrecision(3));
+}
+
+function msToSec(msTime) {
+    return msTime/1000;
+}
+
 // ----- GAME LOGIC -----
 function loadBoard() {
     gameBoard.load();
@@ -386,9 +411,9 @@ var gameBoard = {
         }
         
         // initialize all objects
-        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
-        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
-        greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
+        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 22, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
+        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 6, 9, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
+        greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 21, 19, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
         actors = [madison, ghost, greyWind];
         ferrets = [ghost, greyWind];
         // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
@@ -427,11 +452,9 @@ var gameBoard = {
                       new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
                       madison, ghost, greyWind] // must check against other actors as well
 
-        // place actors on board
-        madison.move(8, 22);
-        ghost.move(6, 9);
-        greyWind.move(21, 19);
+        resetGame();
         
+        // TODO fix image flickering
         // TODO ferrets rotate on top of each other sometimes
         // TODO player speed debuffs
         // TODO score
@@ -440,25 +463,77 @@ var gameBoard = {
 }
 
 function startGame() {
-    console.log('Game started');
-    // TODO game timer
-    // TODO cannot move actor until start has been pressed
+    // disable this button and enable its opposite
+    document.getElementById('start').disabled = true;
+    document.getElementById('pause').disabled = false;
+    document.getElementById('reset').disabled = false;
 
+    // begin timer
+    timerStarted = Date.now();
+    timer = setInterval(updateTimer, timeInterval);
+    
+    // begin ferret movement
     ghostMovement = setInterval(function() {
         ferretMovement(ghost);
     }, ghost.speed);
-
     greyWindMovement = setInterval(function() {
         ferretMovement(greyWind);
     }, greyWind.speed);
 
+    // TODO cannot move actor until start has been pressed
     // TODO user can click on items to display what they are
-
-    // TODO wwhen timer is 0, clearInterval for both ferrets & freeze player
+    // TODO when timer is 0, clearInterval for both ferrets & freeze player
 }
 
 function pauseGame() {
-    console.log('Game paused');
+    // disable this button and enable its opposite
+    document.getElementById('start').disabled = false;
+    document.getElementById('pause').disabled = true;
+
+    // stop the timer and record remaining time
+    clearInterval(timer);
+    gameTime = gameTime - timeElapsed;
+
+    // stop ferret movement
     clearInterval(ghostMovement);
     clearInterval(greyWindMovement);
+}
+
+function resetGame() {
+    // reset buttons
+    document.getElementById('start').disabled = false;
+    document.getElementById('pause').disabled = true;
+    document.getElementById('reset').disabled = true;
+
+    // reset the timer
+    clearInterval(timer);
+    gameTime = totalTime;
+    document.getElementById('timer').innerHTML = timePrecision(msToSec(gameTime));
+
+    // stop ferret movement
+    clearInterval(ghostMovement);
+    clearInterval(greyWindMovement);
+
+    // put actors in their starting positions
+    for (let i = 0; i < actors.length; i++) {
+        actors[i].reset();
+    }
+}
+
+function updateTimer() {
+    timeElapsed = Math.floor((Date.now() - timerStarted));
+    document.getElementById('timer').innerHTML = timePrecision(msToSec(gameTime - timeElapsed));
+    if (gameTime == 0) {
+        pauseGame();
+    }
+    /* 1. when the game starts, the time it was started is logged in timerStarted (see startGame)
+       2. the current time minus time the game started is continuously updated in timeElapsed
+       3. gameTime minus timeElapsed is displayed
+       3. when the game is paused, gameTime minus timeElapsed is saved for when the game is unpaused (see pauseGame)
+       4. when the game is reset, the game time is reset to the totalTime (see resetGame)
+       
+       WHY: This must be done because setInterval does not continue to count down if the player tabs out. Date.now() is
+       a solution to this, but will maintain the time the game was originally started if it is not updated each time the
+       game is started. In addition to needing to update Date.now() every time the game is started, the final timeElapsed
+       value must subtracted from the gameTime when the game is paused. */
 }

@@ -6,6 +6,7 @@ canvas {
 
 #game-options {
 	width: 640px;
+	text-align: center;
 }
 
 /* TODO make this prettier */

@@ -31,3 +31,4 @@ No libraries were used to create this game. Only HTML and CSS validators were us
 * **February 18, 2020** - picked up development again in the late afternoon
 * **February 19, 2020** - continued development throughout the day
 * **February 23, 2020** - developed for about an hour
+* **February 24, 2020** - continued development throughout the day
