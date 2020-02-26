@@ -1,9 +1,6 @@
 // TODO add px to rem converter helper method
 // TODO var or let - JS validator
 
-// ----- SETUP -----
-document.addEventListener('keydown', keyDownHandler, false);
-
 // ----- VARIABLES -----
 // Game States
 var ghostMovement; // TODO setInterval
@@ -453,6 +450,9 @@ function loadBoard() {
 }
 
 function startGame() {
+    // enable player movement
+    document.addEventListener('keydown', keyDownHandler, false);
+
     // disable this button and enable its opposite
     document.getElementById('start').disabled = true;
     document.getElementById('pause').disabled = false;
@@ -471,12 +471,13 @@ function startGame() {
         ferretMovement(greyWind);
     }, greyWind.speed);
 
-    // TODO cannot move actor until start has been pressed
     // TODO user can click on items to display what they are
-    // TODO when timer is 0, clearInterval for both ferrets & freeze player
 }
 
 function pauseGame() {
+    // disable player movement
+    document.removeEventListener('keydown', keyDownHandler, false);
+
     // disable this button and enable its opposite
     document.getElementById('start').disabled = false;
     document.getElementById('pause').disabled = true;
