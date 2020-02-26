@@ -8,12 +8,13 @@ document.addEventListener('keydown', keyDownHandler, false);
 // Game States
 var ghostMovement; // TODO setInterval
 var greyWindMovement; // TODO setInterval
-var timer; // setInterval
+var gameTimer; // setInterval
 
 // Timer
 var totalTime = 60000; // milliseconds
 var gameTime = totalTime; // milliseconds
 var timeElapsed = 0; // milliseconds
+var timeRemaining = totalTime; // milliseconds
 var timeInterval = 100; // milliseconds
 var timerStarted; // Date.now()
 
@@ -372,12 +373,8 @@ function redrawActors() {
     }
 }
 
-function timePrecision(x) {
-  return (Number.parseFloat(x).toPrecision(3));
-}
-
-function msToSec(msTime) {
-    return msTime/1000;
+function timePrecision(timestamp) {
+  return (timestamp/1000).toFixed(2);
 }
 
 // ----- GAME LOGIC -----
@@ -466,16 +463,17 @@ function startGame() {
     // disable this button and enable its opposite
     document.getElementById('start').disabled = true;
     document.getElementById('pause').disabled = false;
-    document.getElementById('reset').disabled = false;
+    document.getElementById('reset').disabled = true;
 
     // begin timer
     timerStarted = Date.now();
-    timer = setInterval(updateTimer, timeInterval);
+    updateTimer();
     
     // begin ferret movement
     ghostMovement = setInterval(function() {
         ferretMovement(ghost);
     }, ghost.speed);
+
     greyWindMovement = setInterval(function() {
         ferretMovement(greyWind);
     }, greyWind.speed);
@@ -489,9 +487,10 @@ function pauseGame() {
     // disable this button and enable its opposite
     document.getElementById('start').disabled = false;
     document.getElementById('pause').disabled = true;
+    document.getElementById('reset').disabled = false;
 
     // stop the timer and record remaining time
-    clearInterval(timer);
+    clearInterval(gameTimer);
     gameTime = gameTime - timeElapsed;
 
     // stop ferret movement
@@ -506,9 +505,9 @@ function resetGame() {
     document.getElementById('reset').disabled = true;
 
     // reset the timer
-    clearInterval(timer);
+    clearInterval(gameTimer);
     gameTime = totalTime;
-    document.getElementById('timer').innerHTML = timePrecision(msToSec(gameTime));
+    document.getElementById('timer').innerHTML = timePrecision(gameTime);
 
     // stop ferret movement
     clearInterval(ghostMovement);
@@ -521,16 +520,25 @@ function resetGame() {
 }
 
 function updateTimer() {
-    timeElapsed = Math.floor((Date.now() - timerStarted));
-    document.getElementById('timer').innerHTML = timePrecision(msToSec(gameTime - timeElapsed));
-    if (gameTime == 0) {
-        pauseGame();
-    }
+    gameTimer = setInterval(function() {
+        timeElapsed = Math.floor((Date.now() - timerStarted));
+        timeRemaining = timePrecision(gameTime - timeElapsed);
+        console.log(timeRemaining);
+        document.getElementById('timer').innerHTML = timeRemaining;
+
+        // TODO this sneaks into negative values, try to fix
+        if (timeRemaining <= 0) {
+            pauseGame();
+            document.getElementById('timer').innerHTML = timePrecision(0);
+            document.getElementById('start').disabled = true;
+        }
+    }, timeInterval);
+
     /* 1. when the game starts, the time it was started is logged in timerStarted (see startGame)
        2. the current time minus time the game started is continuously updated in timeElapsed
        3. gameTime minus timeElapsed is displayed
-       3. when the game is paused, gameTime minus timeElapsed is saved for when the game is unpaused (see pauseGame)
-       4. when the game is reset, the game time is reset to the totalTime (see resetGame)
+       4. when the game is paused, gameTime minus timeElapsed is saved for when the game is unpaused (see pauseGame)
+       5. when the game is reset, the game time is reset to the totalTime (see resetGame)
        
        WHY: This must be done because setInterval does not continue to count down if the player tabs out. Date.now() is
        a solution to this, but will maintain the time the game was originally started if it is not updated each time the
