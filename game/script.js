@@ -379,84 +379,77 @@ function timePrecision(timestamp) {
 
 // ----- GAME LOGIC -----
 function loadBoard() {
-    gameBoard.load();
-} // TODO put in one method
+    can = document.createElement('canvas');
+    cxt = this.context;
 
-var gameBoard = {
-    canvas : document.createElement('canvas'),
-    load : function() {
-        can = this.canvas;
-        cxt = this.context;
+    // TODO - include pics of Grey after tearing up the dishwasher insulation and Ghost ripping up a piddle pad
+    // 'this game is dedicated to my well-behaved ferrets Ghost & Grey Wind'
 
-        // TODO - include pics of Grey after tearing up the dishwasher insulation and Ghost ripping up a piddle pad
-        // 'this game is dedicated to my well-behaved ferrets Ghost & Grey Wind'
+    // CANVAS DIMENSIONS
+    can.width = tSize * bWidth;
+    can.height = tSize * bHeight;
 
-        // CANVAS DIMENSIONS
-        can.width = tSize * bWidth;
-        can.height = tSize * bHeight;
+    // LOAD BOARD
+    cxt = can.getContext('2d');
+    document.body.insertBefore(can, document.body.childNodes[0]);
 
-        // LOAD BOARD
-        cxt = can.getContext('2d');
-        document.body.insertBefore(can, document.body.childNodes[0]);
-
-        // CREATE GAME OBJECTS
-        // create image file paths: imgPrefix + img_Path + direction[i]
-        for (let i = 0; i < sprites.length; i++) {
-            for (let j = 0; j < directions.length; j++) {
-                sprites[i].push(imgPrefix + imgPaths[i] + directions[j]);
-            }
+    // CREATE GAME OBJECTS
+    // create image file paths: imgPrefix + img_Path + direction[i]
+    for (let i = 0; i < sprites.length; i++) {
+        for (let j = 0; j < directions.length; j++) {
+            sprites[i].push(imgPrefix + imgPaths[i] + directions[j]);
         }
-        
-        // initialize all objects
-        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 22, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
-        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 6, 9, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
-        greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 21, 19, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
-        actors = [madison, ghost, greyWind];
-        ferrets = [ghost, greyWind];
-        // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
-        boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
-                      new Boundary('east border', 31, 32, 1, 25), // 1
-                      new Boundary('south border', 0, 32, 25, 26), // 2
-                      new Boundary('west border', 0, 1, 1, 25), // 3
-                      new Boundary('north wall', 1, 31, 1, 2), // 4
-                      new Boundary('northeast wall', 30, 31, 2, 14), // 5
-                      new Boundary('front door', 30, 31, 14, 19), // 6
-                      new Boundary('southeast wall', 30, 31, 19, 25), // 7
-                      new Boundary('laundry closet', 20, 30, 24, 25), // 8
-                      new Boundary('south wall', 12, 20, 24, 25), // 9
-                      new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
-                      new Boundary('southwest wall', 1, 7, 24, 25), // 11
-                      new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
-                      new Boundary('living room pet gate', 3, 4, 11, 17), // 13
-                      new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
-                      new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
-                      new Boundary('oven', 13, 17, 2, 6), // 16
-                      new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
-                      new Boundary('refrigerator', 21, 25, 2, 6), // 18
-                      new Boundary('utility closet', 25, 30, 2, 11), // 19
-                      new Boundary('blue litter box', 28, 30, 11, 13), // 20
-                      new Boundary('rice dig box', 27, 30, 19, 24), // 21
-                      new Boundary('cat condo', 20, 22, 22, 24), // 22
-                      new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
-                      new Boundary('ferret cage', 12, 18, 20, 24), // 24
-                      new Boundary('cat post', 14, 16, 18, 20), // 25
-                      new Boundary('grey litter box', 4, 6, 21, 24), // 26
-                      new Boundary('trash cans', 4, 6, 16, 21), // 27
-                      new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
-                      new Boundary('kitchen table', 12, 17, 10, 15), // 29
-                      new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
-                      new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
-                      new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
-                      madison, ghost, greyWind] // must check against other actors as well
-
-        resetGame();
-        
-        // TODO fix image flickering
-        // TODO ferrets rotate on top of each other sometimes
-        // TODO player speed debuffs
-        // TODO score
-        // TODO make a faint outline around final grid so boundaries are easy to identify
     }
+    
+    // initialize all objects
+    madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 22, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
+    ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 7, 9, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
+    greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
+    actors = [madison, ghost, greyWind];
+    ferrets = [ghost, greyWind];
+    // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
+    boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
+                  new Boundary('east border', 31, 32, 1, 25), // 1
+                  new Boundary('south border', 0, 32, 25, 26), // 2
+                  new Boundary('west border', 0, 1, 1, 25), // 3
+                  new Boundary('north wall', 1, 31, 1, 2), // 4
+                  new Boundary('northeast wall', 30, 31, 2, 14), // 5
+                  new Boundary('front door', 30, 31, 14, 19), // 6
+                  new Boundary('southeast wall', 30, 31, 19, 25), // 7
+                  new Boundary('laundry closet', 20, 30, 24, 25), // 8
+                  new Boundary('south wall', 12, 20, 24, 25), // 9
+                  new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
+                  new Boundary('southwest wall', 1, 7, 24, 25), // 11
+                  new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
+                  new Boundary('living room pet gate', 3, 4, 11, 17), // 13
+                  new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
+                  new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
+                  new Boundary('oven', 13, 17, 2, 6), // 16
+                  new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
+                  new Boundary('refrigerator', 21, 25, 2, 6), // 18
+                  new Boundary('utility closet', 25, 30, 2, 11), // 19
+                  new Boundary('blue litter box', 28, 30, 11, 13), // 20
+                  new Boundary('rice dig box', 27, 30, 19, 24), // 21
+                  new Boundary('cat condo', 20, 22, 22, 24), // 22
+                  new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
+                  new Boundary('ferret cage', 12, 18, 20, 24), // 24
+                  new Boundary('cat post', 14, 16, 18, 20), // 25
+                  new Boundary('grey litter box', 4, 6, 21, 24), // 26
+                  new Boundary('trash cans', 4, 6, 16, 21), // 27
+                  new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
+                  new Boundary('kitchen table', 12, 17, 10, 15), // 29
+                  new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
+                  new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
+                  new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
+                  madison, ghost, greyWind] // must check against other actors as well
+
+    resetGame();
+    
+    // TODO fix image flickering
+    // TODO ferrets rotate on top of each other sometimes
+    // TODO player speed debuffs
+    // TODO score
+    // TODO make a faint outline around final grid so boundaries are easy to identify
 }
 
 function startGame() {
@@ -523,7 +516,6 @@ function updateTimer() {
     gameTimer = setInterval(function() {
         timeElapsed = Math.floor((Date.now() - timerStarted));
         timeRemaining = timePrecision(gameTime - timeElapsed);
-        console.log(timeRemaining);
         document.getElementById('timer').innerHTML = timeRemaining;
 
         // TODO this sneaks into negative values, try to fix
