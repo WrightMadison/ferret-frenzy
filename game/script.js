@@ -61,13 +61,13 @@ var downPressed = false; // S
 var rightPressed = false; // D
 
 // Objects
-var madison, ghost, greyWind, actors, ferrets, boundaries;
+var madison, ghost, greyWind, actors, ferrets, poops, boundaries;
 
 // ----- OBJECT CLASSES -----
 class Character {
    constructor(name, type, width, height, speed, xStart, yStart, W, A, S, D) {
         this.name = name;
-        this.type = type; // human, ferret, furniture
+        this.type = type; // ferret*, furniture, human*, poop
         this.width = width; // tiles
         this.height = height; // tiles
         this.speed = speed; // timeout or interval in milliseconds
@@ -80,6 +80,7 @@ class Character {
         
         this.lastInput = 'W'; // all characters start pointing north
         this.direction = 'W'; // all characters start pointing north
+        this.moveSuccess = true;
         this.left = 0; // tiles (x)
         this.right = 0; // tiles
         this.top = 0; // tiles (y)
@@ -147,6 +148,8 @@ class Character {
                 this.width = originalState[1];
                 this.lastInput = originalState[2];
                 this.direction = originalState[3];
+                this.moveSuccess = false;
+
                 break;
             }
         }
@@ -164,9 +167,10 @@ class Character {
             this.right = newLeft + this.width;
             this.top = newTop;
             this.bottom = newTop + this.height;
+            this.moveSuccess = true;
             
             // redraw all actors
-            redrawActors();
+            redrawObjects();
         }
 
         this.colliding = false;
@@ -219,11 +223,34 @@ class Character {
 class Boundary {
     constructor(name, left, right, top, bottom) {
         this.name = name;
-        this.type = 'furniture';
+        this.type = 'furniture'; // ferret, furniture*, human, poop
         this.left = left;
         this.right = right;
         this.top = top;
         this.bottom = bottom;
+    }
+}
+
+class Poop {
+    constructor(left, top) {
+        this.type = 'poop'; // ferret, furniture, human, poop*
+        this.width = 1; // tiles
+        this.height = 1; // tiles
+
+        this.left = left;
+        this.right = left + 1;
+        this.top = top;
+        this.bottom = top + 1;
+
+        this.image = new Image();
+        this.source = '../images/poop-emoji.png';
+        this.created = Date.now();
+    }
+
+    clean(index) {
+        poops = poops.splice(index, 1);
+        cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
+        //redrawObjects(); // TOOD is this even needed?
     }
 }
 
@@ -349,15 +376,41 @@ function ferretMovement(ferret) {
             ferret.move(1, 0);
         }
     }
+
+    //var rand = getRandomInt(2)
+    // TODO make sure there is not already a poop there
+    if (ferret.moveSuccess == true) {
+        console.log(ferret.moveSuccess);
+        var newPoop;
+        if (ferret.lastInput == 'W') {
+            newPoop = new Poop(ferret.left, ferret.top + 2);
+        } else if (ferret.lastInput == 'A') {
+            newPoop = new Poop(ferret.left + 2, ferret.top);
+        } else if (ferret.lastInput == 'S' || ferret.lastInput == 'D') {
+            newPoop = new Poop(ferret.left, ferret.top);
+        }
+
+        poops.push(newPoop);
+    }
 }
 
-function redrawActors() {
-    // all game objects must redrawn after each move
+// all game objects must redrawn after each move
+function redrawObjects() {
+    // poops must be redrawn first so that actors appear on top of them when they overlap
+    for (let i = 0; i < poops.length; i++) {
+        poops[i].image.addEventListener('load', function() {
+            // image, x, y, width, height
+            cxt.drawImage(poops[i].image, px(poops[i].left), px(poops[i].top), px(poops[i].width), px(poops[i].height));
+        }, false);
+        poops[i].image.src = poops[i].source;
+    }
+
     for (let i = 0; i < actors.length; i++) {
         actors[i].image.addEventListener('load', function() {
             // image, x, y, width, height
             cxt.drawImage(actors[i].image, px(actors[i].left), px(actors[i].top), px(actors[i].width), px(actors[i].height));
         }, false);
+
         if (actors[i].direction == 'W') {
             actors[i].image.src = actors[i].W;
         } else if (actors[i].direction == 'A') {
@@ -404,6 +457,7 @@ function loadBoard() {
     greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
     actors = [madison, ghost, greyWind];
     ferrets = [ghost, greyWind];
+    poops = [];
     // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
     boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
                   new Boundary('east border', 31, 32, 1, 25), // 1
@@ -506,6 +560,10 @@ function resetGame() {
     // stop ferret movement
     clearInterval(ghostMovement);
     clearInterval(greyWindMovement);
+
+    // TODO clear the board of poop
+    cxt.clearRect(px(0), px(0), px(bWidth), px(bHeight));
+    poops = poops.splice(0, poops.length);
 
     // put actors in their starting positions
     for (let i = 0; i < actors.length; i++) {
