@@ -36,7 +36,7 @@ var spritesMadison = [];
 var fWidth = 1; // tiles
 var fHeight = 3; // tiles
 var fMaxMove = 3; // tiles (inclusive)
-var fBaseSpeed = 500; // milliseconds
+var fBaseSpeed = 400; // milliseconds
 var imgGhost = new Image();
 var imgGhostPath = '/Ghost/Ghost-';
 var spritesGhost = [];
@@ -115,7 +115,7 @@ class Character {
                 ((((newLeft >= boundary.left && newLeft < boundary.right) || (newRight > boundary.left && newRight <= boundary.right)) &&
                  ((newTop >= boundary.top && newTop < boundary.bottom) || (newBottom > boundary.top && newBottom <= boundary.bottom))) ||
                 (((boundary.left >= newLeft && boundary.left < newRight) || (boundary.right > newLeft && boundary.right <= newRight)) &&
-                ((boundary.top >= newTop && boundary.top < newBottom) || (boundary.bottom > newTop && boundary.bottom <= newBottom))))) {
+                 ((boundary.top >= newTop && boundary.top < newBottom) || (boundary.bottom > newTop && boundary.bottom <= newBottom))))) {
                 this.colliding = true;
 
 
@@ -147,6 +147,7 @@ class Character {
                 // TODO ghost and grey wind ran into each other
                 // TODO the more poops on a piddle pad or in a litter box, the more points for cleaning it (one tap to clean all)
                 // TODO less points lost for poop left on piddle pad than on floor
+                // TODO if litterbox or pad is full, points double but degrade quickly to a certain amount
 
                 // rotate back
                 this.height = originalState[0];
@@ -173,6 +174,16 @@ class Character {
             this.top = newTop;
             this.bottom = newTop + this.height;
             this.moveSuccess = true;
+
+            for (let i = 0; i < poops.length; i++) {
+            let poop = poops[i];
+
+            if (this.type == "human" &&
+                (((poop.left >= newLeft && poop.left < newRight) || (poop.right > newLeft && poop.right <= newRight)) &&
+                 ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
+                console.log("You stepped in poop!");
+                // TODO - squished poop picture (less points)
+            }
             
             // redraw all actors
             redrawObjects();
