@@ -110,6 +110,7 @@ class Character {
         for (let i = 0; i < boundaries.length; i++) {
             let boundary = boundaries[i];
 
+            // TODO make this more efficient with a map?
             if (this.name != boundary.name &&
                 ((((newLeft >= boundary.left && newLeft < boundary.right) || (newRight > boundary.left && newRight <= boundary.right)) &&
                  ((newTop >= boundary.top && newTop < boundary.bottom) || (newBottom > boundary.top && newBottom <= boundary.bottom))) ||
@@ -127,12 +128,14 @@ class Character {
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
                     // TODO - you stepped in ferret poo (slowed?)
-                    // TODO increase collision box of ball pit
-                // TODO remove console messages for ferrets bonking their noses once ferret rotations work
                 } else if (this.type == 'ferret') {
                     if (boundary.type == 'furniture') {
                         // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
                         // TODO - ferrets are transparent when under the table and cage or inside rice box or cat condo to show their location
+                        if (this.queue.length > 0) {
+                            // if a ferret runs into furniture and has more of the same direction queued, the queue is cleared
+                            this.queue.splice(0, this.queue.length);
+                        }
                     } else if (boundary.type == 'ferret') {
                         console.log(this.name + ' ran into ' + boundary.name);
                         // TODO - the ferrets temporarily speed up
@@ -142,6 +145,8 @@ class Character {
                     }
                 }
                 // TODO ghost and grey wind ran into each other
+                // TODO the more poops on a piddle pad or in a litter box, the more points for cleaning it (one tap to clean all)
+                // TODO less points lost for poop left on piddle pad than on floor
 
                 // rotate back
                 this.height = originalState[0];
@@ -231,6 +236,7 @@ class Boundary {
     }
 }
 
+// TODO may not need the type listed since poop is not a boundary
 class Poop {
     constructor(left, top) {
         this.type = 'poop'; // ferret, furniture, human, poop*
@@ -248,7 +254,8 @@ class Poop {
     }
 
     clean(index) {
-        poops = poops.splice(index, 1);
+        //poops = poops.splice(index, 1);
+        // (top left x, top left y, bottom right x, bottom right y)
         cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
         //redrawObjects(); // TOOD is this even needed?
     }
@@ -307,11 +314,12 @@ function keyDownHandler(e) {
     }
 }
 
+// TODO ferrets sometimes rotate into a new position kinda far away
 function ferretMovement(ferret) {
     if (ferret.queue.length == 0) {
         var randDirection = getRandomInt(4); // 1 = W, 2 = A, 3 = S, 4 = D
         var direction;
-        var distance = getRandomInt(3);
+        var distance = getRandomInt(5);
 
         if (randDirection == 1) {
             direction = 'W';
@@ -377,20 +385,31 @@ function ferretMovement(ferret) {
         }
     }
 
-    //var rand = getRandomInt(2)
-    // TODO make sure there is not already a poop there
-    if (ferret.moveSuccess == true) {
-        console.log(ferret.moveSuccess);
-        var newPoop;
+    // TODO make this more efficient with a map?
+    if (ferret.moveSuccess == true && getRandomInt(10) == 1) {
+        var emptyTile = true;
+        var poopLeft = ferret.left;
+        var poopTop = ferret.top;
+
         if (ferret.lastInput == 'W') {
-            newPoop = new Poop(ferret.left, ferret.top + 2);
+            poopTop = poopTop + 2;
         } else if (ferret.lastInput == 'A') {
-            newPoop = new Poop(ferret.left + 2, ferret.top);
-        } else if (ferret.lastInput == 'S' || ferret.lastInput == 'D') {
-            newPoop = new Poop(ferret.left, ferret.top);
+            poopLeft = poopLeft + 2;
         }
 
-        poops.push(newPoop);
+        // checks if poop already exists at a particular tile
+        for (let i = 0; i < poops.length; i++) {
+            if (poopLeft == poops[i].left && poopTop == poops[i].top) {
+                emptyTile = false;
+                break;
+            }
+        }
+
+        if (emptyTile == true) {
+            var newPoop = new Poop(poopLeft, poopTop);
+            poops.push(newPoop);
+            redrawObjects();
+        }
     }
 }
 
@@ -561,9 +580,9 @@ function resetGame() {
     clearInterval(ghostMovement);
     clearInterval(greyWindMovement);
 
-    // TODO clear the board of poop
-    cxt.clearRect(px(0), px(0), px(bWidth), px(bHeight));
-    poops = poops.splice(0, poops.length);
+    // clear all poop from the board; this is faster than using clean() on each object
+    cxt.clearRect(0, 0, can.width, can.height);
+    poops.splice(0, poops.length);
 
     // put actors in their starting positions
     for (let i = 0; i < actors.length; i++) {
@@ -582,6 +601,8 @@ function updateTimer() {
             pauseGame();
             document.getElementById('timer').innerHTML = timePrecision(0);
             document.getElementById('start').disabled = true;
+
+            // TODO deduction for remaining poops/tasks on board
         }
     }, timeInterval);
 
