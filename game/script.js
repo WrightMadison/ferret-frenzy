@@ -53,6 +53,7 @@ var directions = ['W.png', 'A.png', 'S.png', 'D.png'];
 var sprites = [spritesMadison, spritesGhost, spritesGreyWind];
 /* I opted to have the sprites rotated in four directions to save myself from the hassle of
    calculating cnavas rotations each time an actor moves in order to make the game more efficient */
+var squishedPoop = '../images/poop-squished.png';
 
 // Inputs
 var upPressed = false; // W
@@ -135,7 +136,7 @@ class Character {
                         if (this.queue.length > 0) {
                             // if a ferret runs into furniture and has more of the same direction queued, the queue is cleared
                             this.queue.splice(0, this.queue.length);
-                        }
+                        } // TODO combine with above if (if there is only one)
                     } else if (boundary.type == 'ferret') {
                         console.log(this.name + ' ran into ' + boundary.name);
                         // TODO - the ferrets temporarily speed up
@@ -176,15 +177,17 @@ class Character {
             this.moveSuccess = true;
 
             for (let i = 0; i < poops.length; i++) {
-            let poop = poops[i];
+                let poop = poops[i];
 
-            if (this.type == "human" &&
-                (((poop.left >= newLeft && poop.left < newRight) || (poop.right > newLeft && poop.right <= newRight)) &&
-                 ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
-                console.log("You stepped in poop!");
-                // TODO - squished poop picture (less points)
+                if (this.type == "human" && poop.source != squishedPoop &&
+                    (((poop.left >= newLeft && poop.left < newRight) || (poop.right > newLeft && poop.right <= newRight)) &&
+                     ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
+                    console.log("You stepped in poop!");
+                    poop.source = squishedPoop;
+                    // TODO poop points decrease when poop is squished
+                }
             }
-            
+
             // redraw all actors
             redrawObjects();
         }
@@ -260,7 +263,7 @@ class Poop {
         this.bottom = top + 1;
 
         this.image = new Image();
-        this.source = '../images/poop-emoji.png';
+        this.source = '../images/poop.png';
         this.created = Date.now();
     }
 
@@ -282,7 +285,9 @@ function getRandomInt(max) {
     return Math.floor(Math.random() * max) + 1;
 }
 
-// // the custom movements account for the player not being a perfect square
+// TODO press button to clean shoe
+// TODO JKL or 123 to clean poo (in keydown event) if poo is directly in front
+//the custom movements account for the player not being a perfect square
 function keyDownHandler(e) {
     if (e.key == 'w' || e.key == 'W' || e.key == 'Up' || e.key == 'ArrowUp') {
         if (madison.lastInput == 'A') {
@@ -425,6 +430,7 @@ function ferretMovement(ferret) {
 }
 
 // all game objects must redrawn after each move
+// TODO find a more efficient way to redraw objects - like loading the images in advance once?
 function redrawObjects() {
     // poops must be redrawn first so that actors appear on top of them when they overlap
     for (let i = 0; i < poops.length; i++) {
