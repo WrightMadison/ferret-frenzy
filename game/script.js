@@ -1,5 +1,6 @@
 // TODO add px to rem converter helper method
 // TODO var or let - JS validator
+// TODO add game favicon
 
 // ----- VARIABLES -----
 // Game States
@@ -64,6 +65,9 @@ var rightPressed = false; // D
 // Objects
 var madison, ghost, greyWind, actors, ferrets, poops, boundaries;
 
+// TODO Test images
+var madisonW, madisonA, madisonS, madisonD, ghostW, ghostA, ghostS, ghostD, greyWindW, greyWindA, greyWindS, greyWindD = new Image();
+
 // ----- OBJECT CLASSES -----
 class Character {
    constructor(name, type, width, height, speed, xStart, yStart, W, A, S, D) {
@@ -90,7 +94,7 @@ class Character {
         this.colliding = false;
         this.queue = []; // list of queued moves
     }
-    // TODO - player does not need list of queued moves, only ferrets (or maybe it will come in handy)
+    // TODO - player does not need moveSucces nor list of queued moves, only ferrets (or maybe it will come in handy)
 
     move(deltaX, deltaY) {
         // temporary test rotation
@@ -128,7 +132,6 @@ class Character {
                     }
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
-                    // TODO - you stepped in ferret poo (slowed?)
                 } else if (this.type == 'ferret') {
                     if (boundary.type == 'furniture') {
                         // TODO - ferrets have different boundaries (e.g. can get in ball pit and litter boxes, can run under table)
@@ -184,12 +187,13 @@ class Character {
                      ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
                     console.log("You stepped in poop!");
                     poop.source = squishedPoop;
-                    // TODO poop points decrease when poop is squished
+                    // TODO points deducted from score when poop is stepped on & gain less points from picking up poop
+                    // overall net points should still be positive
                 }
             }
 
             // redraw all actors
-            redrawObjects();
+            requestAnimationFrame(redrawObjects);
         }
 
         this.colliding = false;
@@ -271,7 +275,7 @@ class Poop {
         //poops = poops.splice(index, 1);
         // (top left x, top left y, bottom right x, bottom right y)
         cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
-        //redrawObjects(); // TOOD is this even needed?
+        // TODO might need redrawObjects
     }
 }
 
@@ -424,7 +428,7 @@ function ferretMovement(ferret) {
         if (emptyTile == true) {
             var newPoop = new Poop(poopLeft, poopTop);
             poops.push(newPoop);
-            redrawObjects();
+            requestAnimationFrame(redrawObjects);
         }
     }
 }
@@ -486,9 +490,39 @@ function loadBoard() {
             sprites[i].push(imgPrefix + imgPaths[i] + directions[j]);
         }
     }
+
+    // load images
+    // Madison W
+    madisonW.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(madisonW, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
+    }, false);
+
+
+    madisonA.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(madisonA, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
+    }, false);
+
+    madisonS.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(madisonS, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
+    }, false);
+
+    madisonD.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(madisonD, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
+    }, false);
+
+
+    poops[i].image.addEventListener('load', function() {
+        // image, x, y, width, height
+        cxt.drawImage(poops[i].image, px(poops[i].left), px(poops[i].top), px(poops[i].width), px(poops[i].height));
+    }, false);
+    poops[i].image.src = poops[i].source;
     
     // initialize all objects
-    madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 22, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
+    madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 21, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
     ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 7, 9, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
     greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
     actors = [madison, ghost, greyWind];
@@ -561,7 +595,7 @@ function startGame() {
         ferretMovement(greyWind);
     }, greyWind.speed);
 
-    // TODO user can click on items to display what they are
+    // TODO user can click on items to display what they are (probably not worth the time investment for now)
 }
 
 function pauseGame() {
