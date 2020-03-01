@@ -29,8 +29,6 @@ var bHeight = 26; // tiles
 var pWidth = 3; // tiles
 var pHeight = 2; // tiles
 var pBaseSlows = 0; // milliseconds
-var imgMadison = new Image();
-var imgMadisonPath = '/Madison/Madison-';
 var spritesMadison = [];
 
 // Ferret Settings
@@ -38,25 +36,27 @@ var fWidth = 1; // tiles
 var fHeight = 3; // tiles
 var fMaxMove = 3; // tiles (inclusive)
 var fBaseSpeed = 400; // milliseconds
-var imgGhost = new Image();
-var imgGhostPath = '/Ghost/Ghost-';
 var spritesGhost = [];
-var imgGreyWind = new Image();
-var imgGreyWindPath = '/Grey-Wind/Grey-Wind-';
 var spritesGreyWind = [];
 
+// Poop Settings
+var imagesPoop = [];
+var spritesPoop = [];
+
 // Image Paths
-// imgPrefix + img_Path + direction[i]
-// this is dynamic because it will be easier to edit in case the file structure is later changed
-var imgPrefix = '../images';
-var imgPaths = [imgMadisonPath, imgGhostPath, imgGreyWindPath];
-var directions = ['W.png', 'A.png', 'S.png', 'D.png'];
-var sprites = [spritesMadison, spritesGhost, spritesGreyWind];
-/* I opted to have the sprites rotated in four directions to save myself from the hassle of
-   calculating cnavas rotations each time an actor moves in order to make the game more efficient */
-var squishedPoop = '../images/poop-squished.png';
+var imagePrefix = '../images';
+var imagePaths = ['/Madison/Madison-', '/Ghost/Ghost-', '/Grey-Wind/Grey-Wind-'];
+var imageDirections = ['W.png', 'A.png', 'S.png', 'D.png'];
+var imagePoops = ['/poop.png', '/poop-squished.png'];
+/* This is dynamic because it will be easier to edit in case the file structure is later changed.
+   I opted to have the sprites rotated in four directions to save myself from the hassle of
+   calculating cnavas rotations each time an actor moves in order to make the game more efficient. */
+
+// Sprites
+var sprites = [spritesMadison, spritesGhost, spritesGreyWind, spritesPoop];
 
 // Inputs
+// TODO may not need these?
 var upPressed = false; // W
 var leftPressed = false; // A
 var downPressed = false; // S
@@ -66,22 +66,21 @@ var rightPressed = false; // D
 var madison, ghost, greyWind, actors, ferrets, poops, boundaries;
 
 // TODO Test images
-var madisonW, madisonA, madisonS, madisonD, ghostW, ghostA, ghostS, ghostD, greyWindW, greyWindA, greyWindS, greyWindD = new Image();
+var imagesMadison = [];
+var imagesGhost = [];
+var imagesGreyWind = [];
 
 // ----- OBJECT CLASSES -----
 class Character {
-   constructor(name, type, width, height, speed, xStart, yStart, W, A, S, D) {
+   constructor(name, type, width, height, speed, xStart, yStart, sprites) {
         this.name = name;
         this.type = type; // ferret*, furniture, human*, poop
         this.width = width; // tiles
         this.height = height; // tiles
         this.speed = speed; // timeout or interval in milliseconds
-        this.xStart = xStart;
-        this.yStart = yStart;
-        this.W = W; // file or URL
-        this.A = A; // file or URL
-        this.S = S; // file or URL
-        this.D = D; // file or URL
+        this.xStart = xStart; // tile x-coordinate
+        this.yStart = yStart; // tile y-coordinate
+        this.sprites = sprites; // images
         
         this.lastInput = 'W'; // all characters start pointing north
         this.direction = 'W'; // all characters start pointing north
@@ -90,7 +89,6 @@ class Character {
         this.right = 0; // tiles
         this.top = 0; // tiles (y)
         this.bottom = 0; // tiles
-        this.image = new Image();
         this.colliding = false;
         this.queue = []; // list of queued moves
     }
@@ -182,11 +180,11 @@ class Character {
             for (let i = 0; i < poops.length; i++) {
                 let poop = poops[i];
 
-                if (this.type == "human" && poop.source != squishedPoop &&
+                if (this.type == "human" && poop.squished == false &&
                     (((poop.left >= newLeft && poop.left < newRight) || (poop.right > newLeft && poop.right <= newRight)) &&
                      ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
                     console.log("You stepped in poop!");
-                    poop.source = squishedPoop;
+                    poop.squished = true;
                     // TODO points deducted from score when poop is stepped on & gain less points from picking up poop
                     // overall net points should still be positive
                 }
@@ -266,8 +264,7 @@ class Poop {
         this.top = top;
         this.bottom = top + 1;
 
-        this.image = new Image();
-        this.source = '../images/poop.png';
+        this.squished = false;
         this.created = Date.now();
     }
 
@@ -428,38 +425,78 @@ function ferretMovement(ferret) {
         if (emptyTile == true) {
             var newPoop = new Poop(poopLeft, poopTop);
             poops.push(newPoop);
-            requestAnimationFrame(redrawObjects);
+            requestAnimationFrame(redrawObjects); // TODO is requestAnimationFrame needed anymore?
+        }
+    }
+}
+
+function preloadSprites(callback) {
+    var imagePath;
+    var image;
+    var loadedCounter = 0;
+
+    // TODO make this code less repetitive
+    for (let i = 0; i < sprites.length; i++) {
+        // create image file path
+        if (i != 3) {
+            for (let j = 0; j < imageDirections.length; j++) {
+                // create image
+                image = new Image();
+                imagePath = imagePrefix + imagePaths[i] + imageDirections[j];
+                image.src = imagePath;
+
+                // store the image in its respective array
+                sprites[i].push(image);
+            }
+        } else {
+            for (let j = 0; j < imagePoops.length; j++) {
+                // create image
+                image = new Image();
+                imagePath = imagePrefix + imagePoops[j];
+                image.src = imagePath;
+
+                // store the image in its respective array
+                sprites[i].push(image);
+
+                // synchronizes the images loading with actors being placed on the board
+                if (j == imagePoops.length - 1) {
+                    image.onload = callback;
+                }
+            }
         }
     }
 }
 
 // all game objects must redrawn after each move
-// TODO find a more efficient way to redraw objects - like loading the images in advance once?
+// TODO poops have slight feathering between frames - are multiple being drawn at each location?
 function redrawObjects() {
+    var sprite;
+
     // poops must be redrawn first so that actors appear on top of them when they overlap
     for (let i = 0; i < poops.length; i++) {
-        poops[i].image.addEventListener('load', function() {
-            // image, x, y, width, height
-            cxt.drawImage(poops[i].image, px(poops[i].left), px(poops[i].top), px(poops[i].width), px(poops[i].height));
-        }, false);
-        poops[i].image.src = poops[i].source;
+        if (poops[i].squished == false) {
+            sprite = spritesPoop[0];
+        } else if (poops[i].squished == true) {
+            sprite = spritesPoop[1];
+        }
+
+        // image, x, y, width, height
+        cxt.drawImage(sprite, px(poops[i].left), px(poops[i].top), px(poops[i].width), px(poops[i].height));
     }
 
     for (let i = 0; i < actors.length; i++) {
-        actors[i].image.addEventListener('load', function() {
-            // image, x, y, width, height
-            cxt.drawImage(actors[i].image, px(actors[i].left), px(actors[i].top), px(actors[i].width), px(actors[i].height));
-        }, false);
-
         if (actors[i].direction == 'W') {
-            actors[i].image.src = actors[i].W;
+            sprite = actors[i].sprites[0];
         } else if (actors[i].direction == 'A') {
-            actors[i].image.src = actors[i].A;
+            sprite = actors[i].sprites[1];
         } else if (actors[i].direction == 'S') {
-            actors[i].image.src = actors[i].S;
+            sprite = actors[i].sprites[2];
         } else if (actors[i].direction == 'D') {
-            actors[i].image.src = actors[i].D;
+            sprite = actors[i].sprites[3];
         }
+
+        // image, x, y, width, height
+        cxt.drawImage(sprite, px(actors[i].left), px(actors[i].top), px(actors[i].width), px(actors[i].height));
     }
 }
 
@@ -484,89 +521,54 @@ function loadBoard() {
     document.body.insertBefore(can, document.body.childNodes[0]);
 
     // CREATE GAME OBJECTS
-    // create image file paths: imgPrefix + img_Path + direction[i]
-    for (let i = 0; i < sprites.length; i++) {
-        for (let j = 0; j < directions.length; j++) {
-            sprites[i].push(imgPrefix + imgPaths[i] + directions[j]);
-        }
-    }
+    preloadSprites(function() {
+        // initialize all objects
+        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 21, spritesMadison);
+        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 7, 9, spritesGhost);
+        greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind);
+        actors = [madison, ghost, greyWind];
+        ferrets = [ghost, greyWind];
+        poops = [];
+        // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
+        // TODO add dishwasher boundary (and include it in final board drawing)
+        boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
+                      new Boundary('east border', 31, 32, 1, 25), // 1
+                      new Boundary('south border', 0, 32, 25, 26), // 2
+                      new Boundary('west border', 0, 1, 1, 25), // 3
+                      new Boundary('north wall', 1, 31, 1, 2), // 4
+                      new Boundary('northeast wall', 30, 31, 2, 14), // 5
+                      new Boundary('front door', 30, 31, 14, 19), // 6
+                      new Boundary('southeast wall', 30, 31, 19, 25), // 7
+                      new Boundary('laundry closet', 20, 30, 24, 25), // 8
+                      new Boundary('south wall', 12, 20, 24, 25), // 9
+                      new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
+                      new Boundary('southwest wall', 1, 7, 24, 25), // 11
+                      new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
+                      new Boundary('living room pet gate', 3, 4, 11, 17), // 13
+                      new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
+                      new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
+                      new Boundary('oven', 13, 17, 2, 6), // 16
+                      new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
+                      new Boundary('refrigerator', 21, 25, 2, 6), // 18
+                      new Boundary('utility closet', 25, 30, 2, 11), // 19
+                      new Boundary('blue litter box', 28, 30, 11, 13), // 20
+                      new Boundary('rice dig box', 27, 30, 19, 24), // 21
+                      new Boundary('cat condo', 20, 22, 22, 24), // 22
+                      new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
+                      new Boundary('ferret cage', 12, 18, 20, 24), // 24
+                      new Boundary('cat post', 14, 16, 18, 20), // 25
+                      new Boundary('grey litter box', 4, 6, 21, 24), // 26
+                      new Boundary('trash cans', 4, 6, 16, 21), // 27
+                      new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
+                      new Boundary('kitchen table', 12, 17, 10, 15), // 29
+                      new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
+                      new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
+                      new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
+                      madison, ghost, greyWind] // must check against other actors as well
 
-    // load images
-    // Madison W
-    madisonW.addEventListener('load', function() {
-        // image, x, y, width, height
-        cxt.drawImage(madisonW, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
-    }, false);
-
-
-    madisonA.addEventListener('load', function() {
-        // image, x, y, width, height
-        cxt.drawImage(madisonA, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
-    }, false);
-
-    madisonS.addEventListener('load', function() {
-        // image, x, y, width, height
-        cxt.drawImage(madisonS, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
-    }, false);
-
-    madisonD.addEventListener('load', function() {
-        // image, x, y, width, height
-        cxt.drawImage(madisonD, px(madison.left), px(madison.top), px(madison.width), px(madison.height));
-    }, false);
-
-
-    poops[i].image.addEventListener('load', function() {
-        // image, x, y, width, height
-        cxt.drawImage(poops[i].image, px(poops[i].left), px(poops[i].top), px(poops[i].width), px(poops[i].height));
-    }, false);
-    poops[i].image.src = poops[i].source;
+        resetGame();
+    });    
     
-    // initialize all objects
-    madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 21, spritesMadison[0], spritesMadison[1], spritesMadison[2], spritesMadison[3]);
-    ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 7, 9, spritesGhost[0], spritesGhost[1], spritesGhost[2], spritesGhost[3]);
-    greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind[0], spritesGreyWind[1], spritesGreyWind[2], spritesGreyWind[3]);
-    actors = [madison, ghost, greyWind];
-    ferrets = [ghost, greyWind];
-    poops = [];
-    // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
-    boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
-                  new Boundary('east border', 31, 32, 1, 25), // 1
-                  new Boundary('south border', 0, 32, 25, 26), // 2
-                  new Boundary('west border', 0, 1, 1, 25), // 3
-                  new Boundary('north wall', 1, 31, 1, 2), // 4
-                  new Boundary('northeast wall', 30, 31, 2, 14), // 5
-                  new Boundary('front door', 30, 31, 14, 19), // 6
-                  new Boundary('southeast wall', 30, 31, 19, 25), // 7
-                  new Boundary('laundry closet', 20, 30, 24, 25), // 8
-                  new Boundary('south wall', 12, 20, 24, 25), // 9
-                  new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
-                  new Boundary('southwest wall', 1, 7, 24, 25), // 11
-                  new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
-                  new Boundary('living room pet gate', 3, 4, 11, 17), // 13
-                  new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
-                  new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
-                  new Boundary('oven', 13, 17, 2, 6), // 16
-                  new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
-                  new Boundary('refrigerator', 21, 25, 2, 6), // 18
-                  new Boundary('utility closet', 25, 30, 2, 11), // 19
-                  new Boundary('blue litter box', 28, 30, 11, 13), // 20
-                  new Boundary('rice dig box', 27, 30, 19, 24), // 21
-                  new Boundary('cat condo', 20, 22, 22, 24), // 22
-                  new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
-                  new Boundary('ferret cage', 12, 18, 20, 24), // 24
-                  new Boundary('cat post', 14, 16, 18, 20), // 25
-                  new Boundary('grey litter box', 4, 6, 21, 24), // 26
-                  new Boundary('trash cans', 4, 6, 16, 21), // 27
-                  new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
-                  new Boundary('kitchen table', 12, 17, 10, 15), // 29
-                  new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
-                  new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
-                  new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
-                  madison, ghost, greyWind] // must check against other actors as well
-
-    resetGame();
-    
-    // TODO fix image flickering
     // TODO ferrets rotate on top of each other sometimes
     // TODO player speed debuffs
     // TODO score
@@ -574,42 +576,41 @@ function loadBoard() {
 }
 
 function startGame() {
-    // enable player movement
-    document.addEventListener('keydown', keyDownHandler, false);
-
     // disable this button and enable its opposite
     document.getElementById('start').disabled = true;
     document.getElementById('pause').disabled = false;
     document.getElementById('reset').disabled = true;
 
-    // begin timer
-    timerStarted = Date.now();
-    updateTimer();
+    // enable player movement
+    document.addEventListener('keydown', keyDownHandler, false);
     
     // begin ferret movement
     ghostMovement = setInterval(function() {
         ferretMovement(ghost);
     }, ghost.speed);
-
     greyWindMovement = setInterval(function() {
         ferretMovement(greyWind);
     }, greyWind.speed);
+
+    // begin timer
+    timerStarted = Date.now();
+    updateTimer();
 
     // TODO user can click on items to display what they are (probably not worth the time investment for now)
 }
 
 function pauseGame() {
-    // disable player movement
-    document.removeEventListener('keydown', keyDownHandler, false);
+    // stop the timer and record remaining time
+    clearInterval(gameTimer);
+    gameTime = gameTime - timeElapsed;
 
     // disable this button and enable its opposite
     document.getElementById('start').disabled = false;
     document.getElementById('pause').disabled = true;
     document.getElementById('reset').disabled = false;
 
-    // stop the timer and record remaining time
-    clearInterval(gameTimer);
-    gameTime = gameTime - timeElapsed;
+    // disable player movement
+    document.removeEventListener('keydown', keyDownHandler, false);
 
     // stop ferret movement
     clearInterval(ghostMovement);
