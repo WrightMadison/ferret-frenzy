@@ -16,11 +16,13 @@ They freely roam my kitchen, which contains their cage and toys. The game board 
 * Game Design Document - *to be created soon*
 
 ## Resources
-No libraries were used to create this game. Only HTML and CSS validators were used to make sure my code is clean.
+No game engine, frameworks, or libraries were used to create this game. Only HTML and CSS validators were used to make sure my code is clean.
 
 * The World Wide Web Consortium (W3C)
     * [The W3C Markup Validation Service](https://validator.w3.org/)
     * [The W3C CSS Validation Service](https://jigsaw.w3.org/css-validator/)
+* [Paintbrush](https://paintbrush.sourceforge.io/) - sprite creation
+* [LMMS](https://lmms.io/) - soundtrack creation
 
 ## Timeline
 * **February 1, 2020** - started to make the game around 10:00 PM and worked on it sporadically until about 4:00 AM

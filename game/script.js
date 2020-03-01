@@ -72,18 +72,19 @@ var imagesGreyWind = [];
 
 // ----- OBJECT CLASSES -----
 class Character {
-   constructor(name, type, width, height, speed, xStart, yStart, sprites) {
+   constructor(name, type, width, height, speed, startDirection, startX, startY, sprites) {
         this.name = name;
         this.type = type; // ferret*, furniture, human*, poop
         this.width = width; // tiles
         this.height = height; // tiles
         this.speed = speed; // timeout or interval in milliseconds
-        this.xStart = xStart; // tile x-coordinate
-        this.yStart = yStart; // tile y-coordinate
+        this.startDirection = startDirection; // W, A, S, D
+        this.startX = startX; // tile x-coordinate
+        this.startY = startY; // tile y-coordinate
         this.sprites = sprites; // images
         
-        this.lastInput = 'W'; // all characters start pointing north
-        this.direction = 'W'; // all characters start pointing north
+        this.direction = startDirection; // W, A, S, D
+        this.lastInput = startDirection; // W, A, S, D
         this.moveSuccess = true;
         this.left = 0; // tiles (x)
         this.right = 0; // tiles
@@ -94,12 +95,11 @@ class Character {
     }
     // TODO - player does not need moveSucces nor list of queued moves, only ferrets (or maybe it will come in handy)
 
-    move(deltaX, deltaY) {
-        // temporary test rotation
+    move(input, deltaX, deltaY) {
         // save current state
-        var originalState = [this.height, this.width, this.lastInput, this.direction];
-
-        // undergo rotation
+        var originalState = [this.width, this.height, this.direction, this.lastInput];
+        // update state and undergo rotation
+        this.lastInput = input;
         this.rotate();
 
         // TODO test this rotation logic
@@ -151,11 +151,11 @@ class Character {
                 // TODO less points lost for poop left on piddle pad than on floor
                 // TODO if litterbox or pad is full, points double but degrade quickly to a certain amount
 
-                // rotate back
-                this.height = originalState[0];
-                this.width = originalState[1];
-                this.lastInput = originalState[2];
-                this.direction = originalState[3];
+                // rotation failed - restore previous state
+                this.width = originalState[0];
+                this.height = originalState[1];
+                this.direction = originalState[2];
+                this.lastInput = originalState[3];
                 this.moveSuccess = false;
 
                 break;
@@ -167,14 +167,11 @@ class Character {
             // (top left x, top left y, bottom right x, bottom right y)
             cxt.clearRect(px(this.left), px(this.top), px(this.left+this.width), px(this.top+this.height));
 
-            // permanent rotation
-            this.rotate();
-
-            // update location
+            // rotation succeeded - update location
             this.left = newLeft;
-            this.right = newLeft + this.width;
+            this.right = newRight;
             this.top = newTop;
-            this.bottom = newTop + this.height;
+            this.bottom = newBottom;
             this.moveSuccess = true;
 
             for (let i = 0; i < poops.length; i++) {
@@ -191,7 +188,7 @@ class Character {
             }
 
             // redraw all actors
-            requestAnimationFrame(redrawObjects);
+            redrawObjects();
         }
 
         this.colliding = false;
@@ -233,11 +230,9 @@ class Character {
     }
 
     reset() {
-        this.lastInput = 'W';
-        this.rotate();
-        var deltaX = this.xStart - this.left;
-        var deltaY = this.yStart - this.top;
-        this.move(deltaX, deltaY);
+        var deltaX = this.startX - this.left;
+        var deltaY = this.startY - this.top;
+        this.move(this.startDirection, deltaX, deltaY);
     }
 }
 
@@ -287,51 +282,42 @@ function getRandomInt(max) {
 }
 
 // TODO press button to clean shoe
-// TODO JKL or 123 to clean poo (in keydown event) if poo is directly in front
+// TODO JKL (right-handed mode) or ZXC (left-handed mode) to clean poo (in keydown event) if poo is directly in front
+// TODO make controller map for game
 //the custom movements account for the player not being a perfect square
 function keyDownHandler(e) {
     if (e.key == 'w' || e.key == 'W' || e.key == 'Up' || e.key == 'ArrowUp') {
         if (madison.lastInput == 'A') {
-            madison.lastInput = 'W';
-            madison.move(0, 0);
+            madison.move('W', 0, 0);
         } else if (madison.lastInput == 'D') {
-            madison.lastInput = 'W';
-            madison.move(-1, 0);
+            madison.move('W', -1, 0);
         } else {
-            madison.lastInput = 'W';
-            madison.move(0, -1);
+            madison.move('W', 0, -1);
         }
     } else if (e.key == 'a' || e.key == 'A' || e.key == 'Left' || e.key == 'ArrowLeft') {
         if (madison.lastInput == 'W') {
-            madison.lastInput = 'A';
-            madison.move(0, 0);
+            madison.move('A', 0, 0);
         } else if (madison.lastInput == 'S') {
-            madison.lastInput = 'A';
-            madison.move(0, -1);
+            madison.move('A', 0, -1);
         } else {
-            madison.lastInput = 'A';
-            madison.move(-1, 0);
+            madison.move('A', -1, 0);
         }
     } else if (e.key == 's' || e.key == 'S' || e.key == 'Down' || e.key == 'ArrowDown') {
         if (madison.lastInput == 'D') {
-            madison.lastInput = 'S';
-            madison.move(-1, 1);
+            madison.move('S', -1, 1);
         } else {
-            madison.lastInput = 'S';
-            madison.move(0, 1);
+            madison.move('S', 0, 1);
         }
     } else if (e.key == 'd' || e.key == 'D' || e.key == 'Right' || e.key == 'ArrowRight') {
         if (madison.lastInput == 'S') {
-            madison.lastInput = 'D';
-            madison.move(1, -1);
+            madison.move('D', 1, -1);
         } else {
-            madison.lastInput = 'D';
-            madison.move(1, 0);
+            madison.move('D', 1, 0);
         }
     }
 }
 
-// TODO ferrets sometimes rotate into a new position kinda far away
+// TODO allow ferrets to rotate when directly next to a boundary
 function ferretMovement(ferret) {
     if (ferret.queue.length == 0) {
         var randDirection = getRandomInt(4); // 1 = W, 2 = A, 3 = S, 4 = D
@@ -358,47 +344,35 @@ function ferretMovement(ferret) {
     // the custom movements account for the ferrets not being perfect squares
     if (nextMove == 'W') {
         if (ferret.lastInput == 'W') {
-            ferret.lastInput = 'W';
-            ferret.move(0, -1);
+            ferret.move('W', 0, -1);
         } else if (ferret.lastInput == 'A' || ferret.lastInput == 'D') {
-            ferret.lastInput = 'W';
-            ferret.move(1, -1);
+            ferret.move('W', 1, -1);
         } else if (ferret.lastInput == 'S') {
-            ferret.lastInput = 'W';
-            ferret.move(0, 0);
+            ferret.move('W', 0, 0);
         }
     } else if (nextMove == 'A') {
         if (ferret.lastInput == 'W' || ferret.lastInput == 'S') {
-            ferret.lastInput = 'A';
-            ferret.move(-1, 1);
+            ferret.move('A', -1, 1);
         } else if (ferret.lastInput == 'A') {
-            ferret.lastInput = 'A';
-            ferret.move(-1, 0);
+            ferret.move('A', -1, 0);
         } else if (ferret.lastInput == 'D') {
-            ferret.lastInput = 'A';
-            ferret.move(0, 0);
+            ferret.move('A', 0, 0);
         }
     } else if (nextMove == 'S') {
         if (ferret.lastInput == 'W') {
-            ferret.lastInput = 'S';
-            ferret.move(0, 0);
+            ferret.move('S', 0, 0);
         } else if (ferret.lastInput == 'A' || ferret.lastInput == 'D') {
-            ferret.lastInput = 'S';
-            ferret.move(1, -1);
+            ferret.move('S', 1, -1);
         } else if (ferret.lastInput == 'S') {
-            ferret.lastInput = 'S';
-            ferret.move(0, 1);
+            ferret.move('S', 0, 1);
         }
     } else if (nextMove == 'D') {
         if (ferret.lastInput == 'W' || ferret.lastInput == 'S') {
-            ferret.lastInput = 'D';
-            ferret.move(-1, 1);
+            ferret.move('D', -1, 1);
         } else if (ferret.lastInput == 'A') {
-            ferret.lastInput = 'D';
-            ferret.move(0, 0);
+            ferret.move('D', 0, 0);
         } else if (ferret.lastInput == 'D') {
-            ferret.lastInput = 'D';
-            ferret.move(1, 0);
+            ferret.move('D', 1, 0);
         }
     }
 
@@ -425,7 +399,7 @@ function ferretMovement(ferret) {
         if (emptyTile == true) {
             var newPoop = new Poop(poopLeft, poopTop);
             poops.push(newPoop);
-            requestAnimationFrame(redrawObjects); // TODO is requestAnimationFrame needed anymore?
+            redrawObjects();
         }
     }
 }
@@ -523,9 +497,9 @@ function loadBoard() {
     // CREATE GAME OBJECTS
     preloadSprites(function() {
         // initialize all objects
-        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 8, 21, spritesMadison);
-        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 7, 9, spritesGhost);
-        greyWind = new Character('Grey Wind', 'ferret', fWidth, fHeight, fBaseSpeed, 24, 20, spritesGreyWind);
+        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 'W', 8, 21, spritesMadison);
+        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 'S', 7, 9, spritesGhost);
+        greyWind = new Character('Grey Wind', 'ferret', fHeight, fWidth, fBaseSpeed, 'A', 23, 20, spritesGreyWind);
         actors = [madison, ghost, greyWind];
         ferrets = [ghost, greyWind];
         poops = [];
@@ -569,10 +543,12 @@ function loadBoard() {
         resetGame();
     });    
     
-    // TODO ferrets rotate on top of each other sometimes
+    // TODO ferrets rotate on top of each other sometimes (might be connected to strange rotation issue)
     // TODO player speed debuffs
     // TODO score
+    // TODO include description of points
     // TODO make a faint outline around final grid so boundaries are easy to identify
+    // TODO create poop sprites (replace placeholders)
 }
 
 function startGame() {
