@@ -1,7 +1,14 @@
+/* Color Pallette 
+Border & Font: #2789BA 
+Button Background: #34AEEB
+Button Hover: #75D1FF
+Dialog Background: #A7E0FC */
+
 body {
 	text-align: center;
 	margin: 0px;
 	font-family: 'Courier';
+	font-size: 14px;
 }
 
 canvas {
@@ -19,18 +26,15 @@ canvas {
 .container {
 	float: left;
 	display: table;
-}
-
-.small {
 	height: 120px;
 }
 
-.small:first-child {
+.container:first-child {
 	width: 70px;
 }
 
-.small:nth-child(2) {
-	width: 120px;
+.container:nth-child(2) {
+	width: 110px;
 }
 
 .group {
@@ -42,7 +46,7 @@ canvas {
 	display: block;
 }
 
-.small button:not(:first-child) {
+.container button:not(:first-child) {
 	margin-top: 20px;
 }
 
@@ -60,6 +64,11 @@ button:hover:enabled {
 	background-color: #75D1FF;
 }
 
+.container p, .container a {
+	margin: 0px;
+	font-size: 16px;
+}
+
 .number-group:not(:first-child) {
 	margin-top: 25px;
 }
@@ -70,17 +79,21 @@ button:hover:enabled {
 	margin-bottom: 5px;
 }
 
-.small p {
-	margin: 0px;
-	font-size: 16px;
-}
-
-.large {
-	width: 446px; /* canvas_width - (.small_width(first) + .small_width(second)) - (2 * .large_border) */
-	height: 116px; /* 120px - (2 * .large_border) */
-	border: 2px solid #2789BA;
-}
-
 #dialog-box {
+	width: 456px; /* canvas_width - (.container_width(first) + .container_width(second)) - (2 * .large_border) */
+	height: 116px; /* 120px - (2 * .large_border) */
+	background-color: #A7E0FC;
+	border: 2px solid #2789BA;
+	border-radius: 4px;
 	text-align: left;
+	overflow: scroll;
+}
+
+#dialog-box p, #dialog-box a {
+	margin-top: 3px;
+	margin-bottom: 3px;
+	margin-left: 4px;
+	margin-right: 4px;
+	display: block;
+	word-wrap: break-word;
 }

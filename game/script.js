@@ -17,6 +17,7 @@ var bHeight = 26; // tiles
 var ghostMovement; // TODO setInterval
 var greyWindMovement; // TODO setInterval
 var gameTimer; // setInterval
+var messageCounter = 1;
 
 // Timer
 var totalTime = 60000; // milliseconds
@@ -121,9 +122,9 @@ class Actor {
 
                 if (this.type == 'human') {
                     if (boundary.type == 'furniture') {
-                        console.log('You stubbed your toe on the ' + boundary.name);
+                        newMessage('You stubbed your toe on the ' + boundary.name);
                     } else if (boundary.type == 'ferret') {
-                        console.log('You tripped over ' + boundary.name + ', slowing you down.');
+                        newMessage('You tripped over ' + boundary.name + ', slowing you down');
                     }
                     // TODO lose points & add new dialog for consecutive toe stubs e.g. seriously dude why does this keep happening?! (toe stub counter)
                     // TODO slowed by toe stubs - three stubs within a certain time frame mean you need to sit down/stop for a few seconds
@@ -136,11 +137,11 @@ class Actor {
                             this.queue.splice(0, this.queue.length);
                         } // TODO combine with above if (if there is only one)
                     } else if (boundary.type == 'ferret') {
-                        console.log(this.name + ' ran into ' + boundary.name);
+                        newMessage(this.name + ' ran into ' + boundary.name);
                         // TODO - the ferrets temporarily speed up
                     } else if (boundary.type == 'human') {
                         // TODO - this slows the player
-                        console.log(this.name + ' attacked your shoes and slowed you down.');
+                        newMessage(this.name + ' attacked your shoes and slowed you down');
                     }
                 }
                 // TODO ghost and grey wind ran into each other
@@ -179,7 +180,8 @@ class Actor {
                      ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
                     poop.squished = true;
                     updateScore(ptsPoopSquished);
-                    console.log("You stepped in poop!");
+                    newMessage('You stepped in poop');
+
                 }
             }
 
@@ -479,6 +481,32 @@ function updateScore(deltaPoints) {
     document.getElementById('score').innerHTML = score;
 }
 
+function newMessage(message) {
+    var dialogBox = document.getElementById('dialog-box');
+    var newMessage = timeRemaining + ': ' + message;
+    var lastMessage = '';
+
+    // avoid null error when the div has no children
+    if (dialogBox.lastElementChild != null) {
+        lastMessage = dialogBox.lastElementChild.innerHTML;
+    }
+    
+    if (lastMessage.includes(newMessage)) {
+        messageCounter++;
+        dialogBox.lastElementChild.innerHTML = newMessage + ' (' + messageCounter + ')';
+    } else {
+        messageCounter = 1;
+        var element = document.createElement('p');
+        element.innerHTML = newMessage;
+        dialogBox.appendChild(element);
+        dialogBox.scrollTop = dialogBox.scrollHeight;
+    }
+}
+
+function clearDialog() {
+    document.getElementById('dialog-box').innerHTML = '';
+}
+
 // ----- GAME LOGIC -----
 function loadBoard() {
     can = document.createElement('canvas');
@@ -506,52 +534,53 @@ function loadBoard() {
         ferrets = [ghost, greyWind];
         poops = [];
         // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
-        boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
-                      new Boundary('east border', 31, 32, 1, 25), // 1
-                      new Boundary('south border', 0, 32, 25, 26), // 2
-                      new Boundary('west border', 0, 1, 1, 25), // 3
-                      new Boundary('north wall', 1, 31, 1, 2), // 4
-                      new Boundary('northeast wall', 30, 31, 2, 14), // 5
-                      new Boundary('front door', 30, 31, 14, 19), // 6
-                      new Boundary('southeast wall', 30, 31, 19, 25), // 7
-                      new Boundary('laundry closet', 20, 30, 24, 25), // 8
-                      new Boundary('south wall', 12, 20, 24, 25), // 9
-                      new Boundary('bedroom pet gate', 7, 12, 24, 25), // 10
-                      new Boundary('southwest wall', 1, 7, 24, 25), // 11
-                      new Boundary('Smoke\'s hamster cage shelf', 1, 4, 17, 24), // 12
-                      new Boundary('living room pet gate', 3, 4, 11, 17), // 13
-                      new Boundary('Kilobyte\'s hamster cage shelf', 1, 4, 2, 11), // 14
-                      new Boundary('northwest kitchen cabinets', 4, 13, 2, 6), // 15
-                      new Boundary('oven', 13, 17, 2, 6), // 16
-                      new Boundary('north kitchen cabinet', 17, 20, 2, 6), // 17
-                      new Boundary('refrigerator', 21, 25, 2, 6), // 18
-                      new Boundary('utility closet', 25, 30, 2, 11), // 19
-                      new Boundary('blue litter box', 28, 30, 11, 13), // 20
-                      new Boundary('rice dig box', 27, 30, 19, 24), // 21
-                      new Boundary('cat condo', 20, 22, 22, 24), // 22
-                      new Boundary('pellet litter bin', 18, 20, 21, 24), // 23
-                      new Boundary('ferret cage', 12, 18, 20, 24), // 24
-                      new Boundary('cat post', 14, 16, 18, 20), // 25
-                      new Boundary('grey litter box', 4, 6, 21, 24), // 26
-                      new Boundary('trash cans', 4, 6, 16, 21), // 27
-                      new Boundary('ping pong ball pit', 4, 6, 9, 12), // 28
-                      new Boundary('kitchen table', 12, 17, 10, 15), // 29
-                      new Boundary('plastic ball pit', 20, 21, 15, 17), // 30
-                      new Boundary('plastic ball pit', 21, 23, 14, 18), // 31
-                      new Boundary('plastic ball pit', 23, 24, 15, 17), // 32
+        boundaries = [new Boundary('north border', 0, 32, 0, 1),
+                      new Boundary('east border', 31, 32, 1, 25),
+                      new Boundary('south border', 0, 32, 25, 26),
+                      new Boundary('west border', 0, 1, 1, 25),
+                      new Boundary('north wall', 1, 31, 1, 2),
+                      new Boundary('northeast wall', 30, 31, 2, 14),
+                      new Boundary('front door', 30, 31, 14, 19),
+                      new Boundary('southeast wall', 30, 31, 19, 25),
+                      new Boundary('laundry closet', 20, 30, 24, 25),
+                      new Boundary('south wall', 12, 20, 24, 25),
+                      new Boundary('bedroom pet gate', 7, 12, 24, 25),
+                      new Boundary('southwest wall', 1, 7, 24, 25),
+                      new Boundary('media shelf', 1, 4, 17, 24),
+                      new Boundary('living room pet gate', 3, 4, 11, 17),
+                      new Boundary('bookshelf', 1, 4, 2, 11),
+                      new Boundary('sink', 4, 9, 2, 6),
+                      new Boundary('dishwasher', 9, 13, 2, 6),
+                      new Boundary('oven', 13, 17, 2, 6),
+                      new Boundary('kitchen cabinet', 17, 20, 2, 6),
+                      new Boundary('refrigerator', 21, 25, 2, 6),
+                      new Boundary('utility closet', 25, 30, 2, 11),
+                      new Boundary('blue litter box', 28, 30, 11, 13),
+                      new Boundary('rice dig box', 27, 30, 19, 24),
+                      new Boundary('cat condo', 20, 22, 22, 24),
+                      new Boundary('pellet litter bin', 18, 20, 21, 24),
+                      new Boundary('ferret cage', 12, 18, 20, 24),
+                      new Boundary('cat post', 14, 16, 18, 20),
+                      new Boundary('grey litter box', 4, 6, 21, 24),
+                      new Boundary('trash cans', 4, 6, 16, 21),
+                      new Boundary('ping pong ball pit', 4, 6, 9, 12),
+                      new Boundary('kitchen table', 12, 17, 10, 15),
+                      new Boundary('plastic ball pit', 20, 21, 15, 17),
+                      new Boundary('plastic ball pit', 21, 23, 14, 18),
+                      new Boundary('plastic ball pit', 23, 24, 15, 17),
                       madison, ghost, greyWind] // must check against other actors as well
 
         resetGame();
     });    
     
-    // TODO add dishwasher boundary (and include it in final board drawing)
-    // TODO player speed debuffs
     // TODO score
-    // TODO include time remaining when an event occurs in dialog box
-    // TODO textbox of recent actions (8-bit font?)
-    // TODO include description of points
-    // TODO make a faint outline around final grid so boundaries are easy to identify
     // TODO create poop sprites (replace placeholders)
+    // TODO include description of points & pics of poop types
+    // TODO make a faint outline around final grid so boundaries are easy to identify
+    // TODO player speed debuffs
+    // TODO hide scrollbar
+    // TODO scoreboard
+    // TODO some text overflows when (x) is at end - long boundary names
 }
 
 function startGame() {
@@ -570,6 +599,11 @@ function startGame() {
     greyWindMovement = setInterval(function() {
         ferretMovement(greyWind);
     }, greyWind.speed);
+
+    // clear the dialog box if this is the first game of the page reload
+    if (timerStarted == null) {
+        clearDialog();
+    }
 
     // begin timer
     timerStarted = Date.now();
@@ -607,11 +641,6 @@ function resetGame() {
     gameTime = totalTime;
     document.getElementById('timer').innerHTML = timePrecision(gameTime);
 
-    // reset the score
-    updateScore(score*-1);
-
-    // TODO scoreboard
-
     // stop ferret movement
     clearInterval(ghostMovement);
     clearInterval(greyWindMovement);
@@ -623,6 +652,14 @@ function resetGame() {
     // put actors in their starting positions
     for (let i = 0; i < actors.length; i++) {
         actors[i].reset();
+    }
+
+    // reset the score
+    updateScore(score*-1);
+
+    // clear the dialog box if this is not the first game of the page reload
+    if (timerStarted != null) {
+        clearDialog();
     }
 }
 
