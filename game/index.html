@@ -9,13 +9,33 @@
 </head>
 
 <body onload="loadBoard()">
-    <script src="script.js"></script><br>
-    <br>
-    <div id="game-options">
-    	<button id="start" onclick="startGame()">Start</button><br>
-    	<button id="pause" onclick="pauseGame()">Pause</button><br>
-    	<button id="reset" onclick="resetGame()">Reset</button> 
-    	<p id="timer"></p>
+    <script src="script.js"></script>
+    <div id="control-panel">
+        <!-- these closing right arrows are located to their respective following element's
+             opening left arrow eliminate the space between these inline block elements 
+             https://css-tricks.com/fighting-the-space-between-inline-block-elements/ -->
+        <div class="container small">
+            <div class ="group">
+                <button class="game-state" id="start" onclick="startGame()">Start</button>
+                <button class="game-state" id="pause" onclick="pauseGame()">Pause</button>
+                <button class="game-state" id="reset" onclick="resetGame()">Reset</button>
+            </div>
+        </div
+        ><div class="container small">
+            <div class="group">
+                <div class="number-group">
+                    <p class="game-state">Timer</p>
+                    <p class="game-state" id="timer" ></p>
+                </div
+                ><div class="number-group">
+                    <p class="game-state">Score</p>
+                    <p class="game-state" id="score" ></p>
+                </div>
+            </div>
+        </div
+        ><div class="container large">
+            <div id="dialog-box" >test</div>
+        </div>
     </div>
 </body>
 

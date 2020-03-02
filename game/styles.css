@@ -1,18 +1,86 @@
+body {
+	text-align: center;
+	margin: 0px;
+	font-family: 'Courier';
+}
+
 canvas {
-    /*TODO border: 1px solid #d3d3d3;*/
     background-image: url("../images/board-grid.png");
     background-size: 640px 520px; /* bWidth * tSize, bHeight * tSize */
+    margin-top: 5px;
+    margin-bottom: 10px;
 }
 
-#game-options {
+#control-panel {
+	display: inline-block;
 	width: 640px;
-	text-align: center;
 }
 
-/* TODO make this prettier */
-button {
-	border: 1px solid #000000; /* TODO make corners rounded */
-	/* center the button */
-	margin: 0 auto;
+.container {
+	float: left;
+	display: table;
+}
+
+.small {
+	height: 120px;
+}
+
+.small:first-child {
+	width: 70px;
+}
+
+.small:nth-child(2) {
+	width: 120px;
+}
+
+.group {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.game-state {
 	display: block;
+}
+
+.small button:not(:first-child) {
+	margin-top: 20px;
+}
+
+button {
+	width: 70px;
+	font-family: 'Courier';
+	font-size: 16px;
+
+	background-color: #34AEEB;
+	border: 2px solid #2789BA;
+	border-radius: 4px;
+}
+
+button:hover:enabled {
+	background-color: #75D1FF;
+}
+
+.number-group:not(:first-child) {
+	margin-top: 25px;
+}
+
+.number-group p:first-child {
+	color: #2789BA;
+	font-weight: bold;
+	margin-bottom: 5px;
+}
+
+.small p {
+	margin: 0px;
+	font-size: 16px;
+}
+
+.large {
+	width: 446px; /* canvas_width - (.small_width(first) + .small_width(second)) - (2 * .large_border) */
+	height: 116px; /* 120px - (2 * .large_border) */
+	border: 2px solid #2789BA;
+}
+
+#dialog-box {
+	text-align: left;
 }

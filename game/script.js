@@ -1,8 +1,18 @@
 // TODO add px to rem converter helper method
 // TODO var or let - JS validator
 // TODO add game favicon
+// TODO test in other browsers
 
 // ----- VARIABLES -----
+// Tile Dimensions
+var tSize = 20; // pixels
+
+// Board Dimensions
+var can; // canvas
+var cxt; // context
+var bWidth = 32; // tiles
+var bHeight = 26; // tiles
+
 // Game States
 var ghostMovement; // TODO setInterval
 var greyWindMovement; // TODO setInterval
@@ -16,19 +26,19 @@ var timeRemaining = totalTime; // milliseconds
 var timeInterval = 100; // milliseconds
 var timerStarted; // Date.now()
 
-// Tile Dimensions
-var tSize = 20; // pixels
-
-// Board Dimensions
-var can; // canvas
-var cxt; // context
-var bWidth = 32; // tiles
-var bHeight = 26; // tiles
+// Score & Points
+var score = 0;
+var ptsPoopSquished = -50;
+var ptsPoopCleaned = 100;
+var ptsPoopRemaining = -75;
+// TODO after a certain amount of time poop becomes smellier and less points are possible
+// TODO poop pictures (fresh & not stepped on light brown, old & not stepped on, dark brown -> stepped on variants so 4 total)
+// TODO balance points
 
 // Player Settings
-var pWidth = 3; // tiles
-var pHeight = 2; // tiles
-var pBaseSlows = 0; // milliseconds
+var hWidth = 3; // tiles
+var hHeight = 2; // tiles
+var hBaseSlows = 0; // milliseconds
 var spritesMadison = [];
 
 // Ferret Settings
@@ -36,42 +46,29 @@ var fWidth = 1; // tiles
 var fHeight = 3; // tiles
 var fMaxMove = 3; // tiles (inclusive)
 var fBaseSpeed = 400; // milliseconds
-var spritesGhost = [];
-var spritesGreyWind = [];
+var spritesGhost = []; // images
+var spritesGreyWind = []; // images
 
 // Poop Settings
-var imagesPoop = [];
-var spritesPoop = [];
+var pWidth = 1; // tiles
+var pHeight = 1; // tiles
+var spritesPoop = []; // images
 
-// Image Paths
+// Image Paths & Sprites
 var imagePrefix = '../images';
 var imagePaths = ['/Madison/Madison-', '/Ghost/Ghost-', '/Grey-Wind/Grey-Wind-'];
 var imageDirections = ['W.png', 'A.png', 'S.png', 'D.png'];
 var imagePoops = ['/poop.png', '/poop-squished.png'];
-/* This is dynamic because it will be easier to edit in case the file structure is later changed.
-   I opted to have the sprites rotated in four directions to save myself from the hassle of
-   calculating cnavas rotations each time an actor moves in order to make the game more efficient. */
-
-// Sprites
 var sprites = [spritesMadison, spritesGhost, spritesGreyWind, spritesPoop];
-
-// Inputs
-// TODO may not need these?
-var upPressed = false; // W
-var leftPressed = false; // A
-var downPressed = false; // S
-var rightPressed = false; // D
+/* Image paths are dynamic because it will be easier to edit in case the file structure is later changed.
+   I opted to have the sprites rotated in four directions to save myself from the hassle of
+   calculating canvas rotations each time an actor moves in order to make the game more efficient. */
 
 // Objects
 var madison, ghost, greyWind, actors, ferrets, poops, boundaries;
 
-// TODO Test images
-var imagesMadison = [];
-var imagesGhost = [];
-var imagesGreyWind = [];
-
 // ----- OBJECT CLASSES -----
-class Character {
+class Actor {
    constructor(name, type, width, height, speed, startDirection, startX, startY, sprites) {
         this.name = name;
         this.type = type; // ferret*, furniture, human*, poop
@@ -93,7 +90,7 @@ class Character {
         this.colliding = false;
         this.queue = []; // list of queued moves
     }
-    // TODO - player does not need moveSucces nor list of queued moves, only ferrets (or maybe it will come in handy)
+    // TODO - player does not need moveSuccess nor list of queued moves, only ferrets (or maybe it will come in handy)
 
     move(input, deltaX, deltaY) {
         // save current state
@@ -180,10 +177,9 @@ class Character {
                 if (this.type == "human" && poop.squished == false &&
                     (((poop.left >= newLeft && poop.left < newRight) || (poop.right > newLeft && poop.right <= newRight)) &&
                      ((poop.top >= newTop && poop.top < newBottom) || (poop.bottom > newTop && poop.bottom <= newBottom)))) {
-                    console.log("You stepped in poop!");
                     poop.squished = true;
-                    // TODO points deducted from score when poop is stepped on & gain less points from picking up poop
-                    // overall net points should still be positive
+                    updateScore(ptsPoopSquished);
+                    console.log("You stepped in poop!");
                 }
             }
 
@@ -199,8 +195,8 @@ class Character {
         if (this.direction != this.lastInput) {
             if (this.lastInput == 'W' || this.lastInput == 'S') {
                 if (this.type == 'human') {
-                    this.height = pHeight;
-                    this.width = pWidth;
+                    this.height = hHeight;
+                    this.width = hWidth;
                 } else if (this.type == 'ferret') {
                     this.height = fHeight;
                     this.width = fWidth;
@@ -213,8 +209,8 @@ class Character {
                 }
             } else if (this.lastInput == 'A' || this.lastInput == 'D') {
                 if (this.type == 'human') {
-                    this.height = pWidth;
-                    this.width = pHeight;
+                    this.height = hWidth;
+                    this.width = hHeight;
                 } else if (this.type == 'ferret') {
                     this.height = fWidth;
                     this.width = fHeight;
@@ -251,8 +247,8 @@ class Boundary {
 class Poop {
     constructor(left, top) {
         this.type = 'poop'; // ferret, furniture, human, poop*
-        this.width = 1; // tiles
-        this.height = 1; // tiles
+        this.width = pWidth; // tiles
+        this.height = pHeight; // tiles
 
         this.left = left;
         this.right = left + 1;
@@ -478,11 +474,17 @@ function timePrecision(timestamp) {
   return (timestamp/1000).toFixed(2);
 }
 
+function updateScore(deltaPoints) {
+    score = score + deltaPoints;
+    document.getElementById('score').innerHTML = score;
+}
+
 // ----- GAME LOGIC -----
 function loadBoard() {
     can = document.createElement('canvas');
     cxt = this.context;
 
+    // TODO title screen "Ferret Frenzy"
     // TODO - include pics of Grey after tearing up the dishwasher insulation and Ghost ripping up a piddle pad
     // 'this game is dedicated to my well-behaved ferrets Ghost & Grey Wind'
 
@@ -497,14 +499,13 @@ function loadBoard() {
     // CREATE GAME OBJECTS
     preloadSprites(function() {
         // initialize all objects
-        madison = new Character('Madison', 'human', pWidth, pHeight, pBaseSlows, 'W', 8, 21, spritesMadison);
-        ghost = new Character('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 'S', 7, 9, spritesGhost);
-        greyWind = new Character('Grey Wind', 'ferret', fHeight, fWidth, fBaseSpeed, 'A', 23, 20, spritesGreyWind);
+        madison = new Actor('Madison', 'human', hWidth, hHeight, hBaseSlows, 'W', 8, 21, spritesMadison);
+        ghost = new Actor('Ghost', 'ferret', fWidth, fHeight, fBaseSpeed, 'S', 7, 9, spritesGhost);
+        greyWind = new Actor('Grey Wind', 'ferret', fHeight, fWidth, fBaseSpeed, 'A', 23, 20, spritesGreyWind);
         actors = [madison, ghost, greyWind];
         ferrets = [ghost, greyWind];
         poops = [];
         // many of these boundaries should never be touched, but were created in separate pieces for the sake of debugging
-        // TODO add dishwasher boundary (and include it in final board drawing)
         boundaries = [new Boundary('north border', 0, 32, 0, 1), // 0
                       new Boundary('east border', 31, 32, 1, 25), // 1
                       new Boundary('south border', 0, 32, 25, 26), // 2
@@ -543,9 +544,11 @@ function loadBoard() {
         resetGame();
     });    
     
-    // TODO ferrets rotate on top of each other sometimes (might be connected to strange rotation issue)
+    // TODO add dishwasher boundary (and include it in final board drawing)
     // TODO player speed debuffs
     // TODO score
+    // TODO include time remaining when an event occurs in dialog box
+    // TODO textbox of recent actions (8-bit font?)
     // TODO include description of points
     // TODO make a faint outline around final grid so boundaries are easy to identify
     // TODO create poop sprites (replace placeholders)
@@ -603,6 +606,11 @@ function resetGame() {
     clearInterval(gameTimer);
     gameTime = totalTime;
     document.getElementById('timer').innerHTML = timePrecision(gameTime);
+
+    // reset the score
+    updateScore(score*-1);
+
+    // TODO scoreboard
 
     // stop ferret movement
     clearInterval(ghostMovement);
